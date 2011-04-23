@@ -1,0 +1,77 @@
+/*****************************************************************************
+ This is an Imakefile for GNU make, relying on special imake rules in
+ ~sschaal/prog/imake. In order to use imake and make correctly, look
+ into the README file in ~sschaal/prog/imake.
+
+ Definition of variables:
+
+ SOURCES  : All source files which are used in this Imakefile. Imake
+            will automatically generate dependencies to keep these
+            source files up-to-date with repect to included header files.
+
+ HEADERS  : All header to be kept up to data
+ OBJECTS  : All object files to be used in certain rules. See SS_Imake.rules
+ SRCDIR   : Directory where source files come from (global variable)
+ LIBDIR   : Where to install a lib
+ HEADERDIR: Where to install header files
+ BINDIR   : Where to install executables
+ INCLUDES : All include directories
+
+ Stefan Schaal, September 1996
+
+****************************************************************************/
+
+
+INCLUDES               = -I../src \
+		       	 -I../include \
+			 -I$(MY_INCLUDES) \
+			 -I$(LAB_INCLUDES) \
+		 	 -I$(LAB_ROOT)/cb/include \
+                         -I/usr/X11/include \
+                         -I/usr/local/glut/include
+CFLAGS                 = $(OPTIMIZE_CC_FLAGS) $(INCLUDES) -D$(MACHTYPE)
+SRCDIR                 = ../src
+LIBDIR                 = $(MY_LIBDIR)/$(MACHTYPE)
+HEADERDIR              = $(MY_INCLUDES)
+LDFLAGS                = -L$(MY_LIBDIR)/$(MACHTYPE) $(LAB_LIBDIR) 
+LIBRARIES              = 
+BINDIR                 = .
+
+LIB_TASK      = -lnao_task -lnao -lSLtask -lSLcommon -lutility $(COMM_LIBRARIES) -lm 
+LIB_OPENGL    = -lnao_openGL -lnao -lSLopenGL -lSLcommon -lutility $(COMM_LIBRARIES) -lm  $(OPENGL_LIBRARIES)
+LIB_SIM       = -lnao_simulation -lnao -lSLsimulation -lSLcommon -lutility $(COMM_LIBRARIES) -lm
+
+SRCS_XNAO = \
+	  initUserTasks.c \
+ 	  sample_task.c
+
+OBJS_XNAO = \
+	  initUserTasks.o \
+	  sample_task.o
+
+SRCS_XOPENGL  = \
+	      initUserGraphics.c
+OBJS_XOPENGL  = \
+	      initUserGraphics.o
+	
+SRCS_XSIM  = \
+	initUserSimulation.c
+
+OBJS_XSIM  = \
+	initUserSimulation.o
+
+
+SOURCES = $(SRCS_XNAO) $(SRCS_XOPENGL) $(SRCS_XSIM) 
+OBJECTS = $(OBJS_XNAO) $(OBJS_XOPENGL) $(OBJS_XSIM) 
+
+HEADERS = 
+
+InstallProgram($(LAB_ROOT)/nao/$(MACHTYPE)/xnao,$(BINDIR))
+InstallProgram($(LAB_ROOT)/nao/$(MACHTYPE)/xmotor,$(BINDIR))
+InstallProgram($(LAB_ROOT)/nao/$(MACHTYPE)/xvision,$(BINDIR))
+
+ProgramListTarget( xtask, $(OBJS_XNAO), $(LIB_TASK) )
+ProgramListTarget( xopengl, $(OBJS_XOPENGL), $(LIB_OPENGL) )
+ProgramListTarget( xsimulation, $(OBJS_XSIM), $(LIB_SIM) )
+
+NormalObjRule( $(OBJECTS) )

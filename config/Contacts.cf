@@ -1,0 +1,70 @@
+/* This file specifies the contacts that should be checked. All contacts are lines between two 
+   links of the robot. Each line in the file specifies one contact line with the following specs:
+
+   start_link end_link active n_check start_cond  end_cond
+
+   start_link: name of the start link of the line
+   end_link  : name of the end link of the line
+   active    : 0 or 1 for non-active or active
+   n_checks  : number of check points between start and and point
+   start_cond: 
+   end_cond  : can be "full", "half", or "orth". 
+
+               full: contact forces in all direction are permissible
+               half: contact forces in the half space including the line are permissible. The space
+                     is terminated by the plane perpendicular to the line which includes the start
+		     (or end) point
+               orth: contact forces orthogonal to the line are permitted
+
+   Note that C/C++-style comments are permitted and will be stripped. ':',';','=' are stripped, too.
+
+*/
+
+
+R_SHOULDER	R_ELBOW		1	5	full	orth
+R_ELBOW		R_WRIST		1	5	orth	orth
+R_WRIST		R_HAND		1	5	orth	full
+
+R_IF_BASE	R_IF_SEG1	1	0	orth	orth
+R_IF_SEG1	R_IF_SEG2	1	0	orth	orth
+R_IF_SEG2	R_IF_SEG3	1	0	orth	full
+
+R_MF_BASE	R_MF_SEG1	1	0	orth	orth
+R_MF_SEG1	R_MF_SEG2	1	0	orth	orth
+R_MF_SEG2	R_MF_SEG3	1	0	orth	full
+
+R_TH_BASE	R_TH_SEG1	1	0	orth	orth
+R_TH_SEG1	R_TH_SEG2	1	0	orth	full
+
+L_SHOULDER	L_ELBOW		1	5	full	orth
+L_ELBOW		L_WRIST		1	5	orth	orth
+L_WRIST		L_HAND		1	5	orth	full
+
+L_IF_BASE	L_IF_SEG1	1	0	orth	orth
+L_IF_SEG1	L_IF_SEG2	1	0	orth	orth
+L_IF_SEG2	L_IF_SEG3	1	0	orth	full
+
+L_MF_BASE	L_MF_SEG1	1	0	orth	orth
+L_MF_SEG1	L_MF_SEG2	1	0	orth	orth
+L_MF_SEG2	L_MF_SEG3	1	0	orth	full
+
+L_TH_BASE	L_TH_SEG1	1	0	orth	orth
+L_TH_SEG1	L_TH_SEG2	1	0	orth	full
+
+R_HIP		R_KNEE		1	5	orth	orth
+R_KNEE		R_ANKLE		1	5	orth	orth
+
+L_HIP		L_KNEE		1	5	orth	orth
+L_KNEE		L_ANKLE		1	5	orth	orth
+
+R_SR_FL		R_SR_FR		1	5	full	full
+R_SR_FR		R_SR_RR		1	5	full	full
+R_SR_RR		R_SR_RL		1	5	full	full
+R_SR_RL		R_SR_FL		1	5	full	full
+
+L_SR_FL		L_SR_FR		1	5	full	full
+L_SR_FR		L_SR_RR		1	5	full	full
+L_SR_RR		L_SR_RL		1	5	full	full
+L_SR_RL		L_SR_FL		1	5	full	full
+
+

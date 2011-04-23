@@ -1,0 +1,39 @@
+/* this file contains a list of DOFs that are computed by each processor
+   Note: the file is parsed according to keywords, after the keyword,
+         the values need to come in the correct sequence */
+
+/* format: keyword, <list of joint names for a processor> */
+
+
+task_servo    
+  R_SFE  R_SAA  R_HR  R_EB  R_WR  R_FING
+  L_SFE  L_SAA  L_HR  L_EB  L_WR  L_FING
+  R_FB   R_HFE  R_HAA  R_KFE R_AFE R_AAA	
+  L_FB   L_HFE  L_HAA  L_KFE L_AFE L_AAA
+  B_HR   B_HN
+
+task_sim_servo    
+  R_SFE  R_SAA  R_HR  R_EB  R_WR  R_FING
+  L_SFE  L_SAA  L_HR  L_EB  L_WR  L_FING
+  R_FB   R_HFE  R_HAA  R_KFE R_AFE R_AAA	
+  L_FB   L_HFE  L_HAA  L_KFE L_AFE L_AAA
+  B_HR   B_HN
+
+motor_servo
+  R_SFE  R_SAA  R_HR  R_EB  R_WR  R_FING
+  L_SFE  L_SAA  L_HR  L_EB  L_WR  L_FING
+  R_FB   R_HFE  R_HAA  R_KFE R_AFE R_AAA	
+  L_FB   L_HFE  L_HAA  L_KFE L_AFE L_AAA
+  B_HR   B_HN
+
+
+motor_sim_servo
+  R_SFE  R_SAA  R_HR  R_EB  R_WR  R_FING
+  L_SFE  L_SAA  L_HR  L_EB  L_WR  L_FING
+  R_FB   R_HFE  R_HAA  R_KFE R_AFE R_AAA	
+  L_FB   L_HFE  L_HAA  L_KFE L_AFE L_AAA
+  B_HR   B_HN
+
+
+vision_servo
+vision_sim_servo

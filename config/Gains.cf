@@ -1,0 +1,36 @@
+/* this file contains gains and max control for each DOF
+   Note: the file is parsed according to keywords, after the keyword,
+         the values need to come in the correct sequence */
+
+/* format: keyword, gain_th, gain_thd, gain_int, max_control  */
+
+  R_SFE	   2	.20	0.01	100
+  R_SAA	   2	.20	0.01	100
+  R_HR	   1	.01	0.01	100
+  R_EB	   2.	.01	0.01	100
+  R_WR	   2.	.01	0.01	100
+  R_FING   1.	.01	0.01	100	
+	
+  L_SFE    2	.20	0.01	100
+  L_SAA	   2	.20	0.01	100
+  L_HR	   1	.01	0.01	100
+  L_EB	   2.	.01	0.01	100
+  L_WR	   2.	.01	0.01	100
+  L_FING   1.	.01	0.01	100
+	
+  R_FB     2	.1	0.01	100
+  R_HFE    2	.05	0.01	100
+  R_HAA	   2	.4	0.01	100
+  R_KFE	   1	.01	0.01	100
+  R_AFE	   1	.01	0.01	100
+  R_AAA	   1	.01	0.01	100
+
+  L_FB     2	.1	0.01	100	
+  L_HFE    2	.05	0.01	100
+  L_HAA	   2	.4	0.01	100
+  L_KFE	   1	.01	0.01	100
+  L_AFE	   1	.01	0.01	100
+  L_AAA	   1	.01	0.01	100
+	
+  B_HR     1	.01	0.01	100
+  B_HN     1	.01	0.01	100
