@@ -19,8 +19,16 @@ floor 1 		      /* name and ID of object type */
 0.0 0.0 -0.9 		      /* pos */
 0.0 0.0 0.0  		      /* orient */
 40.0 40.0 1.0  		      /* scale */
-3  			      /* contact model */
+1  			      /* contact model */
 10         		      /* object parameters */
-1000 30 1000 30  .8 .8  .5 .5 /* contact parameters */
-
-
+100 2 100 2  .8 .8  .5 .5 /* contact parameters */
+/*
+cylinder 4 		
+0.2 0.9 0.5          	
+0.1 0.15 0
+0.0 0.0 0.0  		
+0.05 0.05 0.3
+1  			
+30         		
+1000 10 0 0 0.8 0.8	
+*/

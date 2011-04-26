@@ -22,6 +22,13 @@ end
 
 fclose(fp);
 
+% some fudging for numerial stability
+parms(7).inertia(1,1) = 0.001;
+parms(6).inertia(1,1) = 0.001;
+parms(5).inertia(1,1) = 0.005;
+parms(14).inertia(1,1) = 0.001;
+parms(13).inertia(1,1) = parms(13).inertia(1,1)*100;
+
 % the joint ordering from SL
 c = 0;
 
@@ -90,11 +97,11 @@ for i=1:length(linkparms)
 end
 
 % the finger enerial we have to make up
-linkparms(7).m = 0.1;
+linkparms(7).m = 0.2;
 linkparms(7).mcm = [0.03;0;0];
 linkparms(7).inertia = linkparms(7).m*...
   (eye(3)*(linkparms(7).mcm'*linkparms(7).mcm)-linkparms(7).mcm*linkparms(7).mcm')+...
-  eye(3)*0.0001;
+  eye(3)*0.001;
 linkparms(7).mcm = linkparms(7).m*linkparms(7).mcm;
 
 linkparms(13) = linkparms(7);

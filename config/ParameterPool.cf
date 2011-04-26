@@ -30,7 +30,7 @@ checkerboard_offset		0.01
 // contact specific display variables
 
 contact_point_radius	   	0.005
-contact_force_scale             0.01
+contact_force_scale             0.1
 
 
 // oscilloscope settings
