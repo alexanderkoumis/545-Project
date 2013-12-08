@@ -57,14 +57,55 @@ R_KNEE		R_ANKLE		1	5	orth	orth
 L_HIP		L_KNEE		1	5	orth	orth
 L_KNEE		L_ANKLE		1	5	orth	orth
 
-R_SR_FL		R_SR_FR		1	5	full	full
 R_SR_FR		R_SR_RR		1	5	full	full
-R_SR_RR		R_SR_RL		1	5	full	full
 R_SR_RL		R_SR_FL		1	5	full	full
 
-L_SR_FL		L_SR_FR		1	5	full	full
 L_SR_FR		L_SR_RR		1	5	full	full
-L_SR_RR		L_SR_RL		1	5	full	full
 L_SR_RL		L_SR_FL		1	5	full	full
 
 
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.103  0.0000  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.100  0.0100  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.098  0.0200  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.090  0.0300  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.080  0.0350  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.070  0.0370  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.100 -0.0100  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.097 -0.0200  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.093 -0.0300  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.083 -0.0400  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.063 -0.0400  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used  0.055 -0.0460  -0.04511   0.0000 0.0000  -1.0000
+
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.103  0.0000  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.100 -0.0100  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.098 -0.0200  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.090 -0.0300  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.080 -0.0350  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.070 -0.0370  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.100  0.0100  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.097  0.0200  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.093  0.0300  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.083  0.0400  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.063  0.0400  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used  0.055  0.0460  -0.04511   0.0000 0.0000  -1.0000
+
+R_ANKLE         POINT_CONTACT   1   1  half  not_used -0.047  0.0000  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used -0.047  0.0100  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used -0.045  0.0200  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used -0.037  0.0300  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used -0.047 -0.0100  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used -0.047 -0.0200  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used -0.047 -0.0300  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used -0.040 -0.0400  -0.04511   0.0000 0.0000  -1.0000
+R_ANKLE         POINT_CONTACT   1   1  half  not_used -0.030 -0.0500  -0.04511   0.0000 0.0000  -1.0000
+
+L_ANKLE         POINT_CONTACT   1   1  half  not_used -0.047  0.0000  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used -0.047 -0.0100  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used -0.045 -0.0200  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used -0.037 -0.0300  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used -0.047  0.0100  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used -0.047  0.0200  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used -0.047  0.0300  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used -0.040  0.0400  -0.04511   0.0000 0.0000  -1.0000
+L_ANKLE         POINT_CONTACT   1   1  half  not_used -0.030  0.0500  -0.04511   0.0000 0.0000  -1.0000

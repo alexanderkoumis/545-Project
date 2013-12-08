@@ -26,8 +26,17 @@ fclose(fp);
 parms(7).inertia(1,1) = 0.001;
 parms(6).inertia(1,1) = 0.001;
 parms(5).inertia(1,1) = 0.005;
-parms(14).inertia(1,1) = 0.001;
+
+% give the AAA joint too much inertia to stabilize the entire anke
+parms(9).inertia(1,1) = parms(9).inertia(1,1)*100;
+parms(9).inertia(2,2) = parms(9).inertia(2,2)*100;
+parms(9).inertia(3,3) = parms(9).inertia(3,3)*100;
+parms(10).inertia(3,3) = parms(10).inertia(3,3)*100;
+parms(14).inertia(1,1) = parms(14).inertia(1,1)*10;
+parms(14).inertia(2,2) = parms(14).inertia(2,2)*10;
+parms(14).inertia(3,3) = parms(14).inertia(3,3)*10;
 parms(13).inertia(1,1) = parms(13).inertia(1,1)*100;
+parms(12).inertia(2,2) = parms(12).inertia(2,2)*10;
 
 % the joint ordering from SL
 c = 0;
@@ -121,7 +130,7 @@ for i=1:length(linkparms),
     linkparms(i).inertia(2,2),...
     linkparms(i).inertia(2,3),...
     linkparms(i).inertia(3,3),...
-    0.1,0,0,0));
+    0.05,0,0,0));
 end
 
 

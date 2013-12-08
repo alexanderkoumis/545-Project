@@ -13,7 +13,7 @@ Remarks:
 // system headers
 #include "SL_system_headers.h"
 
-/* SL includes */
+// SL includes 
 #include "SL.h"
 #include "SL_user.h"
 #include "SL_tasks.h"
@@ -24,18 +24,17 @@ Remarks:
 #include "SL_shared_memory.h"
 #include "SL_man.h"
 
-/* defines */
+// defines
 
-/* local variables */
+// local variables
 static double start_time = 0.0;
 static double freq;
 static double amp;
 static SL_DJstate  target[N_DOFS+1];
-static int        use_invdyn     = TRUE;
 
-/* global functions */
+// global functions
 
-/* local functions */
+// local functions
 static int  init_sample_task(void);
 static int  run_sample_task(void);
 static int  change_sample_task(void);
@@ -138,17 +137,20 @@ init_sample_task(void)
 static int 
 run_sample_task(void)
 {
-  int i;
+  int j, i;
 
   double task_time;
   double omega;
+  int    dof;
 
   // NOTE: all array indices start with 1 in SL
 
   task_time = task_servo_time - start_time;
   omega     = 2.0*PI*freq;
 
-  for (i=R_EB; i<=R_EB; ++i) {
+  // osciallates one DOF 
+  dof = 1;
+  for (i=dof; i<=dof; ++i) {
     target[i].th   = joint_default_state[i].th +
       amp*sin(omega*task_time);
     target[i].thd   = amp*omega*cos(omega*task_time);
@@ -162,6 +164,9 @@ run_sample_task(void)
     joint_des_state[i].thdd = target[i].thdd;
     joint_des_state[i].uff  = 0.0;
   }
+
+  // compute inverse dynamics torques
+  SL_InvDynNE(joint_state,joint_des_state,endeff,&base_state,&base_orient);
 
   return TRUE;
 }

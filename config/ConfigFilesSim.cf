@@ -4,7 +4,7 @@
 /* format: keyword, configuration file name */
 
 
-Gains			Gains.cf
+Gains			GainsSim.cf
 LinkParameters		LinkParametersSim.cf
 Objects			Objects.cf
 SensorCalibration	SensorCalibration.cf
