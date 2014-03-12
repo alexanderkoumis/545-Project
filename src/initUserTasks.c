@@ -20,6 +20,7 @@ Remarks:
 #include "SL_integrate.h"
 #include "SL_common.h"
 #include "SL_dynamics.h"
+#include "SL_task_servo.h"
 
 // global variables
 
@@ -60,5 +61,8 @@ initUserTasks(void)
   changeRealTime(TRUE);
 
   add_sample_task();
+
+  if (!real_robot_flag)
+    sprintf(initial_user_command,"go0");
 
 }
