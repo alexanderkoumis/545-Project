@@ -1,5 +1,3 @@
-Makefile
-src/Makefile
 i586
 i486
 i486xeno
@@ -7,6 +5,7 @@ i386
 i386mac
 x86_64
 x86_64mac
+x86_64xeno
 sparc
 powerpc
 2700
@@ -19,7 +18,6 @@ doc/latex
 .last_data
 .parameter_pool_vars
 .*_log
-
 lwpr_varnames
 d0*
 learn/*.dcp
@@ -32,3 +30,7 @@ src/*~
 
 *.bak
 */#*
+.cproject
+.project
+*.swp
+
