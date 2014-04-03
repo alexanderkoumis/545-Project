@@ -74,7 +74,7 @@ add_executable(xtask ${SRCS_XTASK})
 target_link_libraries(xtask SLtask SLcommon ${NAME}_task ${NAME} utility ${LAB_STD_LIBS})
 
 add_executable(xopengl ${SRCS_XOPENGL})
-target_link_libraries(xopengl SLopenGL SLcommon ${NAME}_opengl ${NAME} utility ${LAB_STD_LIBS})
+target_link_libraries(xopengl SLopenGL SLcommon ${NAME}_openGL ${NAME} utility ${LAB_STD_LIBS})
 
 add_executable(xsimulation ${SRCS_XSIM})
 target_link_libraries(xsimulation  SLsimulation SLcommon ${NAME}_simulation ${NAME} utility ${LAB_STD_LIBS})
