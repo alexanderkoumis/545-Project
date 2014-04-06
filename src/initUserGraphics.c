@@ -48,6 +48,8 @@ initUserGraphics(void)
 
 {
 
+  switchCometDisplay(TRUE,500);
+
   return TRUE;
 
 }

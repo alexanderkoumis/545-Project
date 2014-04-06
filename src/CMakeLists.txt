@@ -45,6 +45,7 @@ set(SRCS_XTASK
 	initUserTasks.c
 	sample_task.c 
 	sample_task_cpp.cpp
+	min_jerk_task.cpp
 	)
 
 set(SRCS_XOPENGL

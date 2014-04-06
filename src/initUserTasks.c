@@ -53,6 +53,7 @@ initUserTasks(void)
 {
 
   extern void add_sample_task();
+  extern void add_min_jerk_task();
 
   freezeBase(TRUE);
 
@@ -61,6 +62,7 @@ initUserTasks(void)
   changeRealTime(TRUE);
 
   add_sample_task();
+  add_min_jerk_task();
 
   if (!real_robot_flag)
     sprintf(initial_user_command,"go0");
