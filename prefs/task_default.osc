@@ -1,3 +1,4 @@
+/*
 R_FB_th			1	
 R_HFE_th		1
 R_HAA_th		1
@@ -11,20 +12,21 @@ R_HAA_thd		2
 R_KFE_thd		2
 R_AFE_thd		2
 R_AAA_thd		2
-
-
-/*
-R_SFE_th		1
-R_SFE_thd		2
-R_SAA_th		1
-R_SAA_thd		2
-R_HR_th			1
-R_HR_thd		2
-R_EB_th 		1
-R_EB_thd		2
-R_WR_th 		1
-R_WR_thd		2
 */
+
+
+R_SFE_th		1
+R_SAA_th		1
+R_HR_th			1
+R_EB_th 		1
+R_WR_th 		1
+
+R_SFE_thd		2
+R_SAA_thd		2
+R_HR_thd		2
+R_EB_thd		2
+R_WR_thd		2
+
 
 
 
