@@ -105,7 +105,7 @@ for i=1:length(linkparms)
   end
 end
 
-% the finger enerial we have to make up
+% the finger inerial we have to make up
 linkparms(7).m = 0.2;
 linkparms(7).mcm = [0.03;0;0];
 linkparms(7).inertia = linkparms(7).m*...
@@ -115,6 +115,9 @@ linkparms(7).mcm = linkparms(7).m*linkparms(7).mcm;
 
 linkparms(13) = linkparms(7);
 linkparms(13).name = 'L_FING';
+
+% the viscous friction from tuning in the simulator
+visc = [0 .2 .05 .05 .2 .05 .05 .2 .05 .05 .2 .05 .05 .4 .4 .1 .3 .4 .2 .4 .4 .1 .3 .4 .2 .05 .05];
 
 % print all link parameters in SL format
 for i=1:length(linkparms),
@@ -130,7 +133,7 @@ for i=1:length(linkparms),
     linkparms(i).inertia(2,2),...
     linkparms(i).inertia(2,3),...
     linkparms(i).inertia(3,3),...
-    0.05,0,0,0));
+    visc(i),0,0,0));
 end
 
 
