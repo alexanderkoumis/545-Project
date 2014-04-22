@@ -54,8 +54,9 @@ initUserTasks(void)
 
   extern void add_sample_task();
   extern void add_min_jerk_task();
+  extern void balance_task();
 
-  freezeBase(TRUE);
+  //freezeBase(TRUE);
 
   // use the true base state from the simulation servo
   toggleSimulatedBaseState();
@@ -63,6 +64,7 @@ initUserTasks(void)
 
   add_sample_task();
   add_min_jerk_task();
+  add_balance_task();
 
   if (!real_robot_flag)
     sprintf(initial_user_command,"go0");

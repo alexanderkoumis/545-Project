@@ -25,9 +25,9 @@ include($ENV{LAB_ROOT}/config/cmake/LAB.cmake)
 # user defined cmake components
 
 # set global compile type
-set(CMAKE_BUILD_TYPE RelWithDebInfo) # Optimization with debugging info
+#set(CMAKE_BUILD_TYPE RelWithDebInfo) # Optimization with debugging info
 #set(CMAKE_BUILD_TYPE Release)       # Optimization 
-#set(CMAKE_BUILD_TYPE Debug)         # Debug
+set(CMAKE_BUILD_TYPE Debug)         # Debug
 
 # the robot name
 set(NAME "nao")
@@ -46,6 +46,7 @@ set(SRCS_XTASK
 	sample_task.c 
 	sample_task_cpp.cpp
 	min_jerk_task.cpp
+	balance_task.cpp
 	)
 
 set(SRCS_XOPENGL
