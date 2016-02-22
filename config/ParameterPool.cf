@@ -43,3 +43,6 @@ osc_vars_task_file		task_default.osc
 osc_vars_motor_file		motor_default.osc
 osc_vars_vision_file		vision_default.osc
 osc_window_geometry		600x500+600+20
+
+
+goto_speed			0.5

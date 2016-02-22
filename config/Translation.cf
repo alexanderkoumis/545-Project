@@ -1,0 +1,39 @@
+/* this file contains the specification for calibration lines for 
+   all the sensor readings.
+   Note: the file is parsed according to keywords, after the keyword,
+         the values need to come in the correct sequence */
+
+/* format: keyword, pos_slope, pos_off, vel_slop vel_off, load_slope,
+	load_off des_torque_slope des_torque_offset  */
+
+
+R_SFE	-1  0  -1 0  -1 0  -1  0
+R_SAA	 1  0   1 0   1 0   1  0
+R_HR	 1  0   1 0   1 0   1  0
+R_EB	 1  0   1 0   1 0   1  0
+R_WR	 1  0   1 0   1 0   1  0
+R_FING	-1 -1  -1 0  -1 0  -1  0
+
+L_SFE	-1 0    -1 0  -1 0  -1 0
+L_SAA	-1 0    -1 0  -1 0  -1 0
+L_HR	-1 0    -1 0  -1 0  -1 0
+L_EB	-1 0    -1 0  -1 0  -1 0
+L_WR	-1 0    -1 0  -1 0  -1 0
+L_FING	-1 -1   -1 0  -1 0  -1 0
+
+R_FB	-1 0  -1 0  -1 0  -1 0
+R_HFE	-1 0  -1 0  -1 0  -1 0
+R_HAA	 1 0   1 0   1 0   1 0
+R_KFE	 1 0   1 0   1 0   1 0
+R_AFE	-1 0  -1 0  -1 0  -1 0
+R_AAA	-1 0  -1 0  -1 0  -1 0
+
+L_FB	-1 0  -1 0  -1 0  -1 0
+L_HFE	-1 0  -1 0  -1 0  -1 0
+L_HAA	-1 0  -1 0  -1 0  -1 0
+L_KFE	 1 0   1 0   1 0   1 0
+L_AFE	-1 0  -1 0  -1 0  -1 0
+L_AAA	-1 0  -1 0  -1 0  -1 0
+
+B_HR	1 0  1 0  1 0  1 0
+B_HN	1 0  1 0  1 0  1 0

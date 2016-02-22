@@ -21,12 +21,12 @@ floor 1 		      /* name and ID of object type */
 40.0 40.0 1.0  		      /* scale */
 3  			      /* contact model */
 10         		      /* object parameters */
-5000 50 1000 10  .8 .8 0.5 0.01     /* contact parameters */
+10000 100 1000 20 0.5 0.5 0.1 10000     /* contact parameters */
 
 /*
 cylinder 4 		
 0.2 0.9 0.5          	
-0.1 0.15 0
+0.1 0.15 0set
 0.0 0.0 0.0  		
 0.05 0.05 0.3
 1  			

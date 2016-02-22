@@ -1,4 +1,4 @@
-
+/*
 R_FB_th			1	
 R_HFE_th		1
 R_HAA_th		1
@@ -12,7 +12,12 @@ R_HAA_thd		2
 R_KFE_thd		2
 R_AFE_thd		2
 R_AAA_thd		2
-/*
+*/
+base_xd			3
+base_yd			3
+base_zd			3
+
+
 
 
 R_SFE_th		1
@@ -26,7 +31,7 @@ R_SAA_thd		2
 R_HR_thd		2
 R_EB_thd		2
 R_WR_thd		2
-*/
+
 
 
 

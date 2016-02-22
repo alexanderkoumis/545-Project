@@ -53,17 +53,17 @@ initUserTasks(void)
 {
 
   extern void add_sample_task();
-  extern void add_min_jerk_task();
-  extern void balance_task();
+  extern void add_cubic_spline_task();
+  extern void add_balance_task();
 
   //freezeBase(TRUE);
 
   // use the true base state from the simulation servo
   toggleSimulatedBaseState();
-  changeRealTime(TRUE);
+  //changeRealTime(TRUE);
 
   add_sample_task();
-  add_min_jerk_task();
+  add_cubic_spline_task();
   add_balance_task();
 
   if (!real_robot_flag)

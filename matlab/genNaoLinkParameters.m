@@ -17,26 +17,41 @@ while 1,
     parms(c).m         = s(1)/1000;
     parms(c).cm        = s(2:4)/1000;
     parms(c).inertia   = reshape(s(5:13),3,3)/1000/1000/1000;
+    
+    % check positive definitness
+    if sum(sum((parms(c).inertia - parms(c).inertia'))) ~= 0,
+      error('%d inertia is not symmetric',c);
+    end
+    
+    if sum(eig(parms(c).inertia) > 0) ~= 3
+      error('%d inertia is not PD',c);
+    end
   end
 end
 
 fclose(fp);
 
-% some fudging for numerial stability
-parms(7).inertia(1,1) = 0.001;
-parms(6).inertia(1,1) = 0.001;
-parms(5).inertia(1,1) = 0.005;
-
-% give the AAA joint too much inertia to stabilize the entire anke
-parms(9).inertia(1,1) = parms(9).inertia(1,1)*100;
-parms(9).inertia(2,2) = parms(9).inertia(2,2)*100;
-parms(9).inertia(3,3) = parms(9).inertia(3,3)*100;
-parms(10).inertia(3,3) = parms(10).inertia(3,3)*100;
-parms(14).inertia(1,1) = parms(14).inertia(1,1)*10;
-parms(14).inertia(2,2) = parms(14).inertia(2,2)*10;
-parms(14).inertia(3,3) = parms(14).inertia(3,3)*10;
-parms(13).inertia(1,1) = parms(13).inertia(1,1)*100;
-parms(12).inertia(2,2) = parms(12).inertia(2,2)*10;
+if 0, % uncomment for simulation fudge parameters
+  
+  disp(sprintf('Using simulation fudge parameters'));
+  
+  % some fudging for numerial stability
+  parms(7).inertia(1,1) = 0.001;
+  parms(6).inertia(1,1) = 0.001;
+  parms(5).inertia(1,1) = 0.005;
+  
+  % give the AAA joint too much inertia to stabilize the entire ankle
+  parms(9).inertia(1,1)  = parms(9).inertia(1,1)*100;
+  parms(9).inertia(2,2)  = parms(9).inertia(2,2)*100;
+  parms(9).inertia(3,3)  = parms(9).inertia(3,3)*100;
+  parms(10).inertia(3,3) = parms(10).inertia(3,3)*100;
+  parms(14).inertia(1,1) = parms(14).inertia(1,1)*10;
+  parms(14).inertia(2,2) = parms(14).inertia(2,2)*10;
+  parms(14).inertia(3,3) = parms(14).inertia(3,3)*10;
+  parms(13).inertia(1,1) = parms(13).inertia(1,1)*100;
+  parms(12).inertia(2,2) = parms(12).inertia(2,2)*10;
+  
+end
 
 % the joint ordering from SL
 c = 0;
@@ -90,17 +105,26 @@ m = [1; -1; 1];
 
 % search through the orignal parms and copy data over
 for i=1:length(linkparms)
+  found = 0;
   for j=1:length(parms)
     if strcmp(parms(j).name,linkparms(i).name), % these are right side parameters
-      disp(linkparms(i).name);
+      %disp(linkparms(i).name);disp(sprintf(' --%s ',parms(j).name));
       linkparms(i).inertia = linkparms(i).R'*parms(j).inertia*linkparms(i).R;
       linkparms(i).mcm = parms(j).m*linkparms(i).R'*parms(j).cm;
       linkparms(i).m   = parms(j).m;
-    elseif strcmp(parms(j).name(2:end),linkparms(i).name(2:end)), % infer left side parameters
-      disp(linkparms(i).name);
-      linkparms(i).inertia = linkparms(i).R'*(parms(j).inertia.*M)*linkparms(i).R;
-      linkparms(i).mcm = parms(j).m*linkparms(i).R'*(parms(j).cm.*m);
-      linkparms(i).m   = parms(j).m;
+      found = 1;
+      break;
+    end
+  end
+  
+  if ~found,
+    for j=1:length(parms)
+      if strcmp(parms(j).name(2:end),linkparms(i).name(2:end)) & parms(j).name(1) ~= 'B', % infer left side parameters
+        %disp(linkparms(i).name);disp(sprintf(' --%s ',parms(j).name));
+        linkparms(i).inertia = linkparms(i).R'*(parms(j).inertia.*M)*linkparms(i).R;
+        linkparms(i).mcm = parms(j).m*linkparms(i).R'*(parms(j).cm.*m);
+        linkparms(i).m   = parms(j).m;
+      end
     end
   end
 end
@@ -117,7 +141,7 @@ linkparms(13) = linkparms(7);
 linkparms(13).name = 'L_FING';
 
 % the viscous friction from tuning in the simulator
-visc = [0 .2 .05 .05 .2 .05 .05 .2 .05 .05 .2 .05 .05 .4 .4 .1 .3 .4 .2 .4 .4 .1 .3 .4 .2 .05 .05];
+visc = [0 .2 .05 .05 .2 .05 .05 .2 .05 .05 .2 .05 .05 .4 .4 .1 .3 .5 .2 .4 .4 .1 .3 .5 .2 .05 .05];
 
 % print all link parameters in SL format
 for i=1:length(linkparms),
