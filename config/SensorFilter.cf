@@ -6,35 +6,35 @@
 
 /* format: keyword, cutoff th, cutoff thd, cutoff thdd, cutoff load  */
 
-  R_SFE	   100  100  100
-  R_SAA	   100  100  100
-  R_HR	   100  100  100
-  R_EB	   100  100  100
-  R_WR	   100  100  100
-  R_FING   100  100  100	
+  R_SFE	   10  10  10
+  R_SAA	   10  10  10
+  R_HR	   10  10  10
+  R_EB	   10  10  10
+  R_WR	   10  10  10
+  R_FING   10  10  10	
 	
-  L_SFE    100  100  100
-  L_SAA	   100  100  100
-  L_HR	   100  100  100
-  L_EB	   100  100  100
-  L_WR	   100  100  100
-  L_FING   100  100  100
+  L_SFE    10  10  10
+  L_SAA	   10  10  10
+  L_HR	   10  10  10
+  L_EB	   10  10  10
+  L_WR	   10  10  10
+  L_FING   10  10  10
 	
-  R_FB     100  100  100
-  R_HFE    100  100  100
-  R_HAA	   100  100  100
-  R_KFE	   100  100  100
-  R_AFE	   100  100  100
-  R_AAA	   100  100  100
+  R_FB     10  10  10
+  R_HFE    10  10  10
+  R_HAA	   10  10  10
+  R_KFE	   10  10  10
+  R_AFE	   10  10  10
+  R_AAA	   10  10  10
 	
-  L_FB     100  100  100
-  L_HFE    100  100  100
-  L_HAA	   100  100  100
-  L_KFE	   100  100  100
-  L_AFE	   100  100  100
-  L_AAA	   100  100  100
+  L_FB     10  10  10
+  L_HFE    10  10  10
+  L_HAA	   10  10  10
+  L_KFE	   10  10  10
+  L_AFE	   10  10  10
+  L_AAA	   10  10  10
 	
-  B_HR     100  100  100
-  B_HN     100  100  100
+  B_HR     10  10  10
+  B_HN     10  10  10
 
 

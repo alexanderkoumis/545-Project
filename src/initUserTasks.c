@@ -60,7 +60,7 @@ initUserTasks(void)
 
   // use the true base state from the simulation servo
   toggleSimulatedBaseState();
-  changeRealTime(TRUE);
+  //changeRealTime(TRUE);
 
   add_sample_task();
   add_min_jerk_task();

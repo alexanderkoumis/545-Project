@@ -31,6 +31,7 @@ static double start_time = 0.0;
 static double freq;
 static double amp;
 static SL_DJstate  target[N_DOFS+1];
+static double aux = 0.1;
 
 // global functions
 
@@ -158,6 +159,7 @@ run_sample_task(void)
   }
 
   // the following variables need to be assigned
+  /*
   for (i=1; i<=N_DOFS; ++i) {
     joint_des_state[i].th   = target[i].th;
     joint_des_state[i].thd  = target[i].thd;
@@ -167,6 +169,10 @@ run_sample_task(void)
 
   // compute inverse dynamics torques
   SL_InvDynNE(joint_state,joint_des_state,endeff,&base_state,&base_orient);
+  */
+
+  uext_sim[R_AAA].t[_Z_] = aux;
+  sendUextSim();
 
   return TRUE;
 }
@@ -194,6 +200,8 @@ change_sample_task(void)
 
   get_int("This is how to enter an integer variable",ivar,&ivar);
   get_double("This is how to enter a double variable",dvar,&dvar);
+
+  get_double("z-torque",aux,&aux);
 
   return TRUE;
 
