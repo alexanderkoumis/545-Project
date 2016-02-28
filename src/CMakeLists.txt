@@ -46,7 +46,7 @@ set(SRCS_XTASK
 	sample_task.c 
 	sample_task_cpp.cpp
 	min_jerk_task.cpp
-	balance_task.cpp
+#	balance_task.cpp
 	)
 
 set(SRCS_XOPENGL
