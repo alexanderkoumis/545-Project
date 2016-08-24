@@ -46,6 +46,7 @@ set(SRCS_XTASK
 	sample_task.c 
 	sample_task_cpp.cpp
 	cubic_spline_task.cpp
+	draw_task.cpp
 	balance_task.cpp
 	)
 

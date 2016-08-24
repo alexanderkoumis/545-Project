@@ -37,3 +37,25 @@ L_AAA	-1 0  -1 0  -1 0  -1 0
 
 B_HR	1 0  1 0  1 0  1 0
 B_HN	1 0  1 0  1 0  1 0
+
+B_XDD_IMU    	1 0
+B_YDD_IMU	1 0
+B_ZDD_IMU	1 0
+  
+B_ADD_IMU	1 0
+B_BDD_IMU       1 0
+  
+B_A_ANGLE       1 0
+B_B_ANGLE       1 0
+  
+LF_COP_X	1 0
+LF_COP_Y        1 0
+LF_TOTAL_WEIGHT 1 0
+  
+RF_COP_X	1 0
+RF_COP_Y        1 0
+RF_TOTAL_WEIGHT 1 0
+  
+L_SONAR_VAL	1 0
+R_SONAR_VAL     1 0
+

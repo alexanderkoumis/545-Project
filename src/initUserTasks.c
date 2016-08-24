@@ -55,6 +55,7 @@ initUserTasks(void)
   extern void add_sample_task();
   extern void add_cubic_spline_task();
   extern void add_balance_task();
+  extern void add_draw_task();
 
   //freezeBase(TRUE);
 
@@ -65,6 +66,7 @@ initUserTasks(void)
   add_sample_task();
   add_cubic_spline_task();
   add_balance_task();
+  add_draw_task();
 
   if (!real_robot_flag)
     sprintf(initial_user_command,"go0");
