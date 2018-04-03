@@ -1,7 +1,7 @@
 /*============================================================================
 ==============================================================================
                       
-                              min_jerk_task.c
+                              min_jerk_task.cpp
  
 ==============================================================================
 Remarks:
@@ -159,7 +159,9 @@ run_min_jerk_task(void)
 
   double task_time;
 
+  // ******************************************
   // NOTE: all array indices start with 1 in SL
+  // ******************************************
 
   task_time = task_servo_time - start_time;
 
@@ -244,49 +246,8 @@ min_jerk_next_step (double x,double xd, double xdd, double t, double td, double 
 		    double *x_next, double *xd_next, double *xdd_next)
 
 {
-  double t1,t2,t3,t4,t5;
-  double tau,tau1,tau2,tau3,tau4,tau5;
-  int    i,j;
 
-  // a safety check
-  if (dt > t_togo || dt <= 0) {
-    return FALSE;
-  }
-
-  t1 = dt;
-  t2 = t1 * dt;
-  t3 = t2 * dt;
-  t4 = t3 * dt;
-  t5 = t4 * dt;
-
-  tau = tau1 = t_togo;
-  tau2 = tau1 * tau;
-  tau3 = tau2 * tau;
-  tau4 = tau3 * tau;
-  tau5 = tau4 * tau;
-
-  // calculate the constants
-  const double dist   = t - x;
-  const double p1     = t;
-  const double p0     = x;
-  const double a1t2   = tdd;
-  const double a0t2   = xdd;
-  const double v1t1   = td;
-  const double v0t1   = xd;
-  
-  const double c1 = 6.*dist/tau5 + (a1t2 - a0t2)/(2.*tau3) - 
-    3.*(v0t1 + v1t1)/tau4;
-  const double c2 = -15.*dist/tau4 + (3.*a0t2 - 2.*a1t2)/(2.*tau2) +
-    (8.*v0t1 + 7.*v1t1)/tau3; 
-  const double c3 = 10.*dist/tau3+ (a1t2 - 3.*a0t2)/(2.*tau) -
-    (6.*v0t1 + 4.*v1t1)/tau2; 
-  const double c4 = xdd/2.;
-  const double c5 = xd;
-  const double c6 = x;
-  
-  *x_next   = c1*t5 + c2*t4 + c3*t3 + c4*t2 + c5*t1 + c6;
-  *xd_next  = 5.*c1*t4 + 4*c2*t3 + 3*c3*t2 + 2*c4*t1 + c5;
-  *xdd_next = 20.*c1*t3 + 12.*c2*t2 + 6.*c3*t1 + 2.*c4;
+  // your code goes here ...
   
   return TRUE;
 }

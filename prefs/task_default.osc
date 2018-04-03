@@ -12,11 +12,12 @@ R_HAA_thd		2
 R_KFE_thd		2
 R_AFE_thd		2
 R_AAA_thd		2
-*/
-base_xd			3
-base_yd			3
-base_zd			3
 
+base_xdd		3
+base_ydd		3
+base_zdd		3
+
+*/
 
 
 
@@ -32,7 +33,14 @@ R_HR_thd		2
 R_EB_thd		2
 R_WR_thd		2
 
-
+/*
+B_XDD_IMU		3
+B_YDD_IMU		3
+B_ZDD_IMU		3
+*/
+base_xdd		3
+base_ydd		3
+base_zdd		3
 
 
 

@@ -37,4 +37,24 @@
   B_HR     10  10  10
   B_HN     10  10  10
 
-
+  B_XDD_IMU    	   100
+  B_YDD_IMU	   100
+  B_ZDD_IMU	   100
+  
+  B_ADD_IMU	   100
+  B_BDD_IMU        100
+  
+  B_A_ANGLE        100
+  B_B_ANGLE        100
+  
+  LF_COP_X	   100
+  LF_COP_Y         100
+  LF_TOTAL_WEIGHT  100
+  
+  RF_COP_X	   100
+  RF_COP_Y         100
+  RF_TOTAL_WEIGHT  100
+  
+  L_SONAR_VAL	   100
+  R_SONAR_VAL      100
+  

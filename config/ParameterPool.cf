@@ -10,12 +10,18 @@
 */
 
 // window geometry specifications
-
-task_servo_geometry		90x30-600+670
-motor_servo_geometry		90x12-600+298
-vision_servo_geometry		90x12-600+484
-simulation_servo_geometry	90x8-600+164
-openGL_servo_geometry		90x8-600+30
+/*
+task_servo_geometry		90x30+60+0
+motor_servo_geometry		90x12+60+0
+vision_servo_geometry		90x12+60+0
+simulation_servo_geometry	90x8+60+0
+openGL_servo_geometry		90x8+60+0
+*/
+task_servo_geometry		90x30-60+670
+motor_servo_geometry		90x12-60+298
+vision_servo_geometry		90x12-60+484
+simulation_servo_geometry	90x8-60+164
+openGL_servo_geometry		90x8-60+30
 
 main_window_geometry		30%x50%+20+20
 main_window_camera_pos		0.5 0.5 0.2

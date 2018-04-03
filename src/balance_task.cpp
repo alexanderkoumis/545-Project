@@ -13,6 +13,7 @@ Remarks:
 // system headers
 #include "SL_system_headers.h"
 
+#include <fstream>
 /* SL includes */
 #include "SL.h"
 #include "SL_user.h"
@@ -30,81 +31,62 @@ Remarks:
 static double      start_time = 0.0;
 static SL_DJstate  target[N_DOFS+1];
 static SL_Cstate   cog_target;
-static SL_Cstate   cog_desired;
+static SL_Cstate   cog_traj;
 static SL_Cstate   cog_ref;
 static double      delta_t = 0.01;
-static double      duration = 10.0;
+static double      duration = 5.0;
+// static double      duration = 10.0;
 static double      time_to_go;
 static int         which_step;
 
+// possible states of a state machine
 enum Steps {
-  ASSIGN_COG_TARGET,
-  MOVE_TO_COG_TARGET,
-  ASSIGN_JOINT_TARGET_LIFT_UP,
-  MOVE_JOINT_TARGET_LIFT_UP
+  ASSIGN_COG_TARGET_RIGHT     = 0,
+  MOVE_COG_TARGET_RIGHT       = 1,
+  ASSIGN_JOINT_LEFT_LEG_UP    = 2,
+  MOVE_JOINT_LEFT_LEG_UP      = 3,
+  ASSIGN_JOINT_LEFT_LEG_DOWN  = 4,
+  MOVE_JOINT_LEFT_LEG_DOWN    = 5,
+  ASSIGN_COG_TARGET_LEFT      = 6,
+  MOVE_COG_TARGET_LEFT        = 7,
+  ASSIGN_JOINT_RIGHT_LEG_UP   = 8,
+  MOVE_JOINT_RIGHT_LEG_UP     = 9,
+  ASSIGN_JOINT_RIGHT_LEG_DOWN = 10,
+  MOVE_JOINT_RIGHT_LEG_DOWN   = 11
 };
 
+// variables for COG control
 static iMatrix     stat;
 static Matrix      Jccogp;
 static Matrix      NJccog;
 static Matrix      fc;
+static Vector      thd;
+static Vector      cog_ref_xd_mat;
 
 // global functions 
 extern "C" void
 add_balance_task( void );
-
+// 
 // local functions
 static int  init_balance_task(void);
 static int  run_balance_task(void);
 static int  change_balance_task(void);
 
-static int 
-min_jerk_next_step (double x,double xd, double xdd, double t, double td, double tdd,
-		    double t_togo, double dt,
-		    double *x_next, double *xd_next, double *xdd_next);
+static int  min_jerk_next_step (double x,double xd, double xdd, double t, double td, double tdd,
+        double t_togo, double dt,
+        double *x_next, double *xd_next, double *xdd_next);
 
 
-/*****************************************************************************
-******************************************************************************
-Function Name	: add_balance_task
-Date		: Feb 1999
-Remarks:
-
-adds the task to the task menu
-
-******************************************************************************
-Paramters:  (i/o = input/output)
-
-none
-
-*****************************************************************************/
-void
-add_balance_task( void )
+void add_balance_task( void )
 {
   int i, j;
   
   addTask("Balance Task", init_balance_task, 
-	  run_balance_task, change_balance_task);
+    run_balance_task, change_balance_task);
 
-}    
+}
 
-/*****************************************************************************
-******************************************************************************
-  Function Name	: init_balance_task
-  Date		: Dec. 1997
-
-  Remarks:
-
-  initialization for task
-
-******************************************************************************
-  Paramters:  (i/o = input/output)
-
-       none
-
- *****************************************************************************/
-static int 
-init_balance_task(void)
+static int init_balance_task(void)
 {
   int j, i;
   int ans;
@@ -113,306 +95,322 @@ init_balance_task(void)
   if (firsttime){
     firsttime = FALSE;
 
+    // allocate memory
     stat   = my_imatrix(1,N_ENDEFFS,1,2*N_CART);
     Jccogp = my_matrix(1,N_DOFS,1,N_CART);
     NJccog = my_matrix(1,N_DOFS,1,N_DOFS+2*N_CART);
     fc     = my_matrix(1,N_ENDEFFS,1,2*N_CART);
 
+    thd = my_vector(1, N_DOFS);
+    cog_ref_xd_mat = my_vector(1, N_CART);
+
+    // this is an indicator which Cartesian components of the endeffectors are constraints
+    // i.e., both feet are on the ground and cannot move in position or orientation
+    stat[RIGHT_FOOT][1] = TRUE;
+    stat[RIGHT_FOOT][2] = TRUE;
+    stat[RIGHT_FOOT][3] = TRUE;
+    stat[RIGHT_FOOT][4] = TRUE;
+    stat[RIGHT_FOOT][5] = TRUE;
+    stat[RIGHT_FOOT][6] = TRUE;
+
+    stat[LEFT_FOOT][1] = TRUE;
+    stat[LEFT_FOOT][2] = TRUE;
+    stat[LEFT_FOOT][3] = TRUE;
+    stat[LEFT_FOOT][4] = TRUE;
+    stat[LEFT_FOOT][5] = TRUE;
+    stat[LEFT_FOOT][6] = TRUE;
 
   }
-
-  // this is an indicator which Cartesian components of the endeffectors are constraints
-  // i.e., both feet are on the ground and cannot move in position or orientation
-  stat[RIGHT_FOOT][1] = TRUE;
-  stat[RIGHT_FOOT][2] = TRUE;
-  stat[RIGHT_FOOT][3] = TRUE;
-  stat[RIGHT_FOOT][4] = TRUE;
-  stat[RIGHT_FOOT][5] = TRUE;
-  stat[RIGHT_FOOT][6] = TRUE;
-  
-  stat[LEFT_FOOT][1] = TRUE;
-  stat[LEFT_FOOT][2] = TRUE;
-  stat[LEFT_FOOT][3] = TRUE;
-  stat[LEFT_FOOT][4] = TRUE;
-  stat[LEFT_FOOT][5] = TRUE;
-  stat[LEFT_FOOT][6] = TRUE;
-
 
   // prepare going to the default posture
   bzero((char *)&(target[1]),N_DOFS*sizeof(target[1]));
   for (i=1; i<=N_DOFS; i++)
     target[i] = joint_default_state[i];
 
-  ans = 0;
-  get_int("Go to one leg balance posture?",ans,&ans);
-  if (ans) {
-    target[R_SAA].th = -1.5;
-    target[R_HAA].th = 0.25;
-    target[R_AAA].th = 0.25;
-    target[L_HAA].th = -0.35;
-    target[L_AAA].th = 0.25;
-    target[L_HFE].th = 0.3;
-    target[L_KFE].th = 0.8;
-    target[L_AFE].th = 0.5;
-  }
-
   // go to the target using inverse dynamics (ID)
   if (!go_target_wait_ID(target)) 
     return FALSE;
 
-  // ready to go
-  ans = 999;
-  while (ans == 999) {
-    if (!get_int("Enter 1 to start or anthing else to abort ...",ans,&ans))
-      return FALSE;
-  }
-  
-  // only go when user really types the right thing
-  if (ans != 1) 
-    return FALSE;
-
   start_time = task_servo_time;
   printf("start time = %.3f, task_servo_time = %.3f\n", 
-	 start_time, task_servo_time);
+   start_time, task_servo_time);
 
   // start data collection
   scd();
 
   // state machine starts at ASSIGN_COG_TARGET
-  which_step = ASSIGN_COG_TARGET;
-
-
-  //  target[R_SFE].th  = -1.83;
-  //target[L_SFE].th  = -1.83;
-  target[R_HAA].th  =  0.22;
-  target[R_AAA].th  =  0.22;
-  target[L_HAA].th  = -0.22;
-  target[L_AAA].th  =  0.26;
-  time_to_go = duration;
-
-  //which_step = MOVE_JOINT_TARGET_LIFT_UP;
+  which_step = ASSIGN_COG_TARGET_RIGHT;
 
   return TRUE;
 }
 
-/*****************************************************************************
-******************************************************************************
-  Function Name	: run_balance_task
-  Date		: Dec. 1997
 
-  Remarks:
-
-  run the task from the task servo: REAL TIME requirements!
-
-******************************************************************************
-  Paramters:  (i/o = input/output)
-
-  none
-
- *****************************************************************************/
-static int 
-run_balance_task(void)
+static void min_jerk_cog()
 {
-  int j, i, n;
-  double task_time;
-  double kp = 0.1;
-  double aux;
-  static int firsttime = TRUE;
-  static int wait_ticks;
-  double s = 0.1;
-
-
-  // ******************************************
-  // NOTE: all array indices start with 1 in SL
-  // ******************************************
-
-  task_time = task_servo_time - start_time;
-
-  // the following code computes the contraint COG Jacobian 
-  // Jccogp is an N_DOFS x N_CART matrix
-  // NJccog is an N_DOFS x N_DOF+2*N_CART matrix
-
-  compute_cog_kinematics(stat, TRUE, FALSE, FALSE, Jccogp, NJccog);
-  
-  /*
-  if (firsttime) {
-    FILE *fp;
-    fp = fopen("mist.mat","r");
-    fread_mat(fp,Jccogp);
-    fclose(fp);
-    firsttime = FALSE;
-    print_mat("Jccogp",Jccogp);
+  for (int i=1; i<=N_CART; ++i) {
+    min_jerk_next_step(
+      cog_traj.x[i],
+      cog_traj.xd[i],
+      cog_traj.xdd[i],
+      cog_target.x[i],
+      cog_target.xd[i],
+      cog_target.xdd[i],
+      time_to_go,
+      delta_t,
+      &(cog_traj.x[i]),
+      &(cog_traj.xd[i]),
+      &(cog_traj.xdd[i]));
   }
-  */
+}
 
-  //print_mat("Jccogp",Jccogp);
-  //print_mat("Jcog",Jcog);
-
-  //print_mat("Jccogp",Jccogp);
-  //getchar();
-
-  switch (which_step) {
-    
-  case ASSIGN_COG_TARGET:
-
-    bzero((void *)&cog_target,sizeof(cog_target));
-    cog_target.x[_X_] = 0.05;
-    cog_target.x[_Y_] = 0.00;
-    cog_target.x[_Z_] = -.13;
-
-    bzero((void *)&cog_desired,sizeof(cog_desired));
-    for (i=1; i<=N_CART; ++i)
-      cog_desired.x[i] = cog_des.x[i];
-
-    // time to go
-    time_to_go = duration;
-
-    // switch to next step of state machine
-    which_step = MOVE_TO_COG_TARGET;
-
-    break;
-
-  case MOVE_TO_COG_TARGET:
-
-    // plan the next step of cog with min jerk
-    for (i=1; i<=N_CART; ++i) {
-      min_jerk_next_step(cog_desired.x[i],
-			 cog_desired.xd[i],
-			 cog_desired.xdd[i],
-			 cog_target.x[i],
-			 cog_target.xd[i],
-			 cog_target.xdd[i],
-			 time_to_go,
-			 delta_t,
-			 &(cog_desired.x[i]),
-			 &(cog_desired.xd[i]),
-			 &(cog_desired.xdd[i]));
-    }
-
-    // inverse kinematics
-    for (i=1; i<=N_CART; ++i)
-      cog_ref.xd[i] = kp*(cog_desired.x[i] - cog_des.x[i]) + cog_desired.xd[i];
-
-    //printf("cog_ref = %f %f %f\n",cog_ref.xd[1],cog_ref.xd[2],cog_ref.xd[3]);
-
-    // initialize
-    for (i=1; i<=N_DOFS; ++i) {
-      joint_des_state[i].thd  = 0;
-      joint_des_state[i].thdd = 0;
-    }
-
-    for (i=1; i<=N_DOFS; ++i) {
-      for (j=1; j<=N_CART; ++j) {
-	joint_des_state[i].thd += cog_ref.xd[j] * Jccogp[i][j];
-      }
-    }
-
-    // integrate the desired state
-    for (i=1; i<=N_DOFS; ++i) 
-      joint_des_state[i].th += joint_des_state[i].thd * delta_t;
+static void min_jerk_joints()
+{
+  for (int i = 1; i <= N_DOFS; ++i) {
+    SL_DJstate &joint_ = joint_des_state[i];
+    SL_DJstate &target_ = target[i];
+    min_jerk_next_step(
+        joint_.th,
+        joint_.thd,
+        joint_.thdd,
+        target_.th,
+        target_.thd,
+        target_.thdd,
+        time_to_go,
+        delta_t,
+        &joint_.th,
+        &joint_.thd,
+        &joint_.thdd
+    );
+  }
+}
 
 
-    // decrement time to go
-    time_to_go -= delta_t;
-    if (time_to_go <= 0) {
-      which_step = ASSIGN_JOINT_TARGET_LIFT_UP;
-    }
-
-    break;
-
-  case ASSIGN_JOINT_TARGET_LIFT_UP:
-    for (i=1; i<=N_DOFS; ++i)
-      target[i] = joint_des_state[i];
-
-    target[L_HFE].th += s;
-    target[L_KFE].th += 2*s;
-    target[L_AFE].th += s;
-    target[L_HAA].th -= 0.3;
-    target[L_AAA].th  = 0.38;
-
-    target[R_HAA].th -= 0.3;
-    //target[R_AAA].th += 0.1;
-    time_to_go = duration*4;
-
-    for (n=1; n<=6; ++n)
-      stat[LEFT_FOOT][n] = FALSE;
-
-    wait_ticks = task_servo_rate;
-
-    which_step = MOVE_JOINT_TARGET_LIFT_UP;
-
-    break;
-
-  case MOVE_JOINT_TARGET_LIFT_UP:
-
-    if (--wait_ticks > 0)
-      break;
-
-    // compute the update for the desired states
-    for (i=1; i<=N_DOFS; ++i) {
-      min_jerk_next_step(joint_des_state[i].th,
-			 joint_des_state[i].thd,
-			 joint_des_state[i].thdd,
-			 target[i].th,
-			 target[i].thd,
-			 target[i].thdd,
-			 time_to_go,
-			 delta_t,
-			 &(joint_des_state[i].th),
-			 &(joint_des_state[i].thd),
-			 &(joint_des_state[i].thdd));
-    }
-
-    // decrement time to go
-    time_to_go -= delta_t;
-    if (time_to_go <= 0) {
+static Steps time_step(Steps current_step, Steps next_step, bool should_freeze=false)
+{
+  time_to_go -= delta_t;
+  if (time_to_go <= 0) {
+    if (should_freeze) {
       freeze();
+    } else {
+      return next_step;
     }
+  }
+  return current_step;
+}
 
-    break;
 
+static void cog_assignment(float x, float y, float z)
+{
+  bzero((void *)&cog_target,sizeof(cog_target));
+
+  cog_target.x[_X_] = x;
+  cog_target.x[_Y_] = y;
+  cog_target.x[_Z_] = z;
+
+  for (int i=1; i<=6; ++i) {
+    stat[RIGHT_FOOT][i] = TRUE;
+    stat[LEFT_FOOT][i] = TRUE;
   }
 
+  // the structure cog_des has the current position of the COG computed from the
+  // joint_des_state of the robot. cog_des should track cog_traj
+  bzero((void *)&cog_traj,sizeof(cog_traj));
+  for (int i=1; i<=N_CART; ++i) {
+    cog_traj.x[i] = cog_des.x[i];
+  }
+}
 
-  if (which_step > ASSIGN_JOINT_TARGET_LIFT_UP) {
 
-    ;
+static void cog_computation()
+{
+  double kp = 0.1;
+  compute_cog_kinematics(stat, TRUE, FALSE, TRUE, Jccogp, NJccog);
+  min_jerk_cog();
 
-
-  } else {
-
-
-    for (i=1; i<=N_DOFS; ++i)
-      joint_des_state[i].uff = 0.0;
-    
-    inverseDynamicsFloat(delta_t, stat, TRUE, joint_des_state, NULL, NULL, fc);
-    //double xdd_ref[3+1] = {0,0,0,0};
-    //double add_ref[3+1] = {0,0,0,0};
-    //inverseDynamicsFloat(delta_t, stat, TRUE, joint_des_state, xdd_ref, add_ref, fc);
+  for (int i=1; i<=N_CART; ++i){
+    cog_ref.xd[i] = kp*(cog_traj.x[i] - cog_des.x[i]) + cog_traj.xd[i];
+    cog_ref_xd_mat[i] = cog_ref.xd[i];    
   }
 
+  mat_vec_mult(Jccogp, cog_ref_xd_mat, thd);
 
+  // compute the joint_des_state[i].th and joint_des_state[i].thd  
+  for (int i=1; i<=N_DOFS; ++i) {
+
+    // intialize to zero
+    joint_des_state[i].thd  = 0;
+    joint_des_state[i].thdd = 0;
+    joint_des_state[i].uff  = 0;
+
+    joint_des_state[i].th = thd[i] * delta_t + joint_des_state[i].th;
+    joint_des_state[i].thd = thd[i];
+    joint_des_state[i].thdd = 0;
+    joint_des_state[i].uff  = 0;
+  }
+}
+
+
+static Steps state_assign_cog_target_right()
+{
+  cog_assignment(
+    cart_des_state[RIGHT_FOOT].x[_X_] * 1.2,
+    cart_des_state[RIGHT_FOOT].x[_Y_],
+    cart_des_state[RIGHT_FOOT].x[_Z_]
+  );
+
+  // time to go
+  time_to_go = 10.0;
+  // time_to_go = 5.0;
+
+  // switch to next step of state machine
+  return MOVE_COG_TARGET_RIGHT;
+}
+
+
+static Steps state_move_cog_target_right()
+{
+  cog_computation();
+  // this is a special inverse dynamics computation for a free standing robot
+  inverseDynamicsFloat(delta_t, stat, TRUE, joint_des_state, NULL, NULL, fc);
+  return time_step(MOVE_COG_TARGET_RIGHT, ASSIGN_JOINT_LEFT_LEG_UP);
+}
+
+
+static Steps state_assign_joint_left_leg_up()
+{
+  // initialize the target structure from the joint_des_state
+  for (int i=1; i<=N_DOFS; ++i) {
+    target[i] = joint_des_state[i];
+  }
+
+  target[L_HFE].th =  0.6;
+  target[L_HAA].th = -0.4;
+
+  // time_to_go = 10.0;
+  time_to_go = 5.0;
+
+  return MOVE_JOINT_LEFT_LEG_UP;
+}
+
+static Steps state_move_joint_left_leg_up()
+{
+
+  min_jerk_joints();
+  return time_step(MOVE_JOINT_LEFT_LEG_UP, ASSIGN_JOINT_LEFT_LEG_DOWN);
+}
+
+
+static Steps state_assign_joint_left_leg_down()
+{
+  for (int i=1; i<=N_DOFS; ++i) {
+    target[i] = joint_des_state[i];
+  }
+
+  target[L_HAA].th = -0.25;
+  target[R_HFE].th = 0.2;
+  target[R_AFE].th = 0.05;
+
+  time_to_go = 5.0;
+
+  return MOVE_JOINT_LEFT_LEG_DOWN;
+}
+
+static Steps state_move_joint_left_leg_down()
+{
+  min_jerk_joints();
+  return time_step(MOVE_JOINT_LEFT_LEG_DOWN, ASSIGN_COG_TARGET_LEFT);
+}
+
+static Steps state_assign_cog_target_left()
+{
+  cog_assignment(
+      cart_des_state[LEFT_FOOT].x[_X_],
+      cart_des_state[LEFT_FOOT].x[_Y_],
+      cart_des_state[LEFT_FOOT].x[_Z_]
+  );
+  time_to_go = 10.0;
+  return MOVE_COG_TARGET_LEFT;
+}
+
+
+static Steps state_move_cog_target_left()
+{
+  cog_computation();
+  // this is a special inverse dynamics computation for a free standing robot
+  inverseDynamicsFloat(delta_t, stat, TRUE, joint_des_state, NULL, NULL, fc);
+  return time_step(MOVE_COG_TARGET_LEFT, ASSIGN_JOINT_RIGHT_LEG_UP);
+}
+
+
+static Steps state_assign_joint_right_leg_up()
+{
+  // initialize the target structure from the joint_des_state
+  for (int i=1; i<=N_DOFS; ++i) {
+    target[i] = joint_des_state[i];
+  }
+
+  target[L_HFE].th =  0.6;
+  target[R_HFE].th =  0.6;
+  target[R_HAA].th = -0.4;
+
+  time_to_go = 10.0;
+
+  return MOVE_JOINT_RIGHT_LEG_UP;
+}
+
+static Steps state_move_joint_right_leg_up()
+{
+
+  min_jerk_joints();
+  return time_step(MOVE_JOINT_RIGHT_LEG_UP, ASSIGN_JOINT_RIGHT_LEG_DOWN);
+}
+
+
+static Steps state_assign_joint_right_leg_down()
+{
+  for (int i=1; i<=N_DOFS; ++i) {
+    target[i] = joint_des_state[i];
+  }
+
+  target[R_HAA].th = -0.25;
+
+  time_to_go = 10.0;
+
+  return MOVE_JOINT_RIGHT_LEG_DOWN;
+}
+
+static Steps state_move_joint_right_leg_down()
+{
+  min_jerk_joints();
+  return time_step(MOVE_JOINT_RIGHT_LEG_DOWN, ASSIGN_COG_TARGET_RIGHT);
+}
+
+
+
+
+static int run_balance_task(void)
+{
+
+  printf("%d, %f\n", which_step, time_to_go);
+  switch (which_step) {
+    case ASSIGN_COG_TARGET_RIGHT     : which_step = state_assign_cog_target_right();    break;
+    case MOVE_COG_TARGET_RIGHT       : which_step = state_move_cog_target_right();      break;
+    case ASSIGN_JOINT_LEFT_LEG_UP    : which_step = state_assign_joint_left_leg_up();   break;
+    case MOVE_JOINT_LEFT_LEG_UP      : which_step = state_move_joint_left_leg_up();     break;
+    case ASSIGN_JOINT_LEFT_LEG_DOWN  : which_step = state_assign_joint_left_leg_down(); break;
+    case MOVE_JOINT_LEFT_LEG_DOWN    : which_step = state_move_joint_left_leg_down();   break;
+    case ASSIGN_COG_TARGET_LEFT      : which_step = state_assign_cog_target_left();     break;
+    case MOVE_COG_TARGET_LEFT        : which_step = state_move_cog_target_left();       break;
+    case ASSIGN_JOINT_RIGHT_LEG_UP   : which_step = state_assign_joint_right_leg_up();   break;
+    case MOVE_JOINT_RIGHT_LEG_UP     : which_step = state_move_joint_right_leg_up();     break;
+    case ASSIGN_JOINT_RIGHT_LEG_DOWN : which_step = state_assign_joint_right_leg_down(); break;
+    case MOVE_JOINT_RIGHT_LEG_DOWN   : which_step = state_move_joint_right_leg_down();   break;
+  }
 
   return TRUE;
 }
 
-/*****************************************************************************
-******************************************************************************
-  Function Name	: change_balance_task
-  Date		: Dec. 1997
-
-  Remarks:
-
-  changes the task parameters
-
-******************************************************************************
-  Paramters:  (i/o = input/output)
-
-  none
-
- *****************************************************************************/
-static int 
-change_balance_task(void)
+static int change_balance_task(void)
 {
   int    ivar;
   double dvar;
@@ -424,32 +422,9 @@ change_balance_task(void)
 
 }
 
-
-/*!*****************************************************************************
- *******************************************************************************
-\note  min_jerk_next_step
-\date  April 2014
-   
-\remarks 
-
-Given the time to go, the current state is updated to the next state
-using min jerk splines
-
- *******************************************************************************
- Function Parameters: [in]=input,[out]=output
-
- \param[in]          x,xd,xdd : the current state, vel, acceleration
- \param[in]          t,td,tdd : the target state, vel, acceleration
- \param[in]          t_togo   : time to go until target is reached
- \param[in]          dt       : time increment
- \param[in]          x_next,xd_next,xdd_next : the next state after dt
-
- ******************************************************************************/
-static int 
-min_jerk_next_step (double x,double xd, double xdd, double t, double td, double tdd,
-		    double t_togo, double dt,
-		    double *x_next, double *xd_next, double *xdd_next)
-
+static int min_jerk_next_step (double x,double xd, double xdd, double t, double td, double tdd,
+        double t_togo, double dt,
+        double *x_next, double *xd_next, double *xdd_next)
 {
   double t1,t2,t3,t4,t5;
   double tau,tau1,tau2,tau3,tau4,tau5;
@@ -497,4 +472,3 @@ min_jerk_next_step (double x,double xd, double xdd, double t, double td, double 
   
   return TRUE;
 }
-
