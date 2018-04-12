@@ -34,26 +34,22 @@ static SL_Cstate   cog_target;
 static SL_Cstate   cog_traj;
 static SL_Cstate   cog_ref;
 static double      delta_t = 0.01;
-static double      duration = 5.0;
-// static double      duration = 10.0;
+static double      duration = 10.0;
 static double      time_to_go;
 static int         which_step;
 
 // possible states of a state machine
 enum Steps {
-  ASSIGN_COG_TARGET_RIGHT     = 0,
-  MOVE_COG_TARGET_RIGHT       = 1,
-  ASSIGN_JOINT_LEFT_LEG_UP    = 2,
-  MOVE_JOINT_LEFT_LEG_UP      = 3,
-  ASSIGN_JOINT_LEFT_LEG_DOWN  = 4,
-  MOVE_JOINT_LEFT_LEG_DOWN    = 5,
-  ASSIGN_COG_TARGET_LEFT      = 6,
-  MOVE_COG_TARGET_LEFT        = 7,
-  ASSIGN_JOINT_RIGHT_LEG_UP   = 8,
-  MOVE_JOINT_RIGHT_LEG_UP     = 9,
-  ASSIGN_JOINT_RIGHT_LEG_DOWN = 10,
-  MOVE_JOINT_RIGHT_LEG_DOWN   = 11
+  COG_RIGHT,
+  LEFT_LEG_UP,
+  LEFT_LEG_DOWN,
+  FIX_POSTURE_1,
+  COG_LEFT,
+  RIGHT_LEG_UP,
+  RIGHT_LEG_DOWN,
+  FIX_POSTURE_2,
 };
+static int num_steps = FIX_POSTURE_2 + 1;
 
 // variables for COG control
 static iMatrix     stat;
@@ -76,6 +72,12 @@ static int  min_jerk_next_step (double x,double xd, double xdd, double t, double
         double t_togo, double dt,
         double *x_next, double *xd_next, double *xdd_next);
 
+/*** Added functions for the project ***/
+static void min_jerk_joints();
+static void min_jerk_cog();
+static void move_cog(float x, float y, float z);
+static void next_step();
+
 
 void add_balance_task( void )
 {
@@ -92,7 +94,7 @@ static int init_balance_task(void)
   int ans;
   static int firsttime = TRUE;
   
-  if (firsttime){
+  if (firsttime) {
     firsttime = FALSE;
 
     // allocate memory
@@ -104,28 +106,24 @@ static int init_balance_task(void)
     thd = my_vector(1, N_DOFS);
     cog_ref_xd_mat = my_vector(1, N_CART);
 
-    // this is an indicator which Cartesian components of the endeffectors are constraints
-    // i.e., both feet are on the ground and cannot move in position or orientation
-    stat[RIGHT_FOOT][1] = TRUE;
-    stat[RIGHT_FOOT][2] = TRUE;
-    stat[RIGHT_FOOT][3] = TRUE;
-    stat[RIGHT_FOOT][4] = TRUE;
-    stat[RIGHT_FOOT][5] = TRUE;
-    stat[RIGHT_FOOT][6] = TRUE;
+  }
 
-    stat[LEFT_FOOT][1] = TRUE;
-    stat[LEFT_FOOT][2] = TRUE;
-    stat[LEFT_FOOT][3] = TRUE;
-    stat[LEFT_FOOT][4] = TRUE;
-    stat[LEFT_FOOT][5] = TRUE;
-    stat[LEFT_FOOT][6] = TRUE;
-
+  // this is an indicator which Cartesian components of the endeffectors are constraints
+  // i.e., both feet are on the ground and cannot move in position or orientation
+  for (i=1; i<=2*N_CART; ++i) {
+    stat[RIGHT_FOOT][i] = TRUE;
+    stat[LEFT_FOOT][i] = TRUE;
   }
 
   // prepare going to the default posture
   bzero((char *)&(target[1]),N_DOFS*sizeof(target[1]));
-  for (i=1; i<=N_DOFS; i++)
+  for (i=1; i<=N_DOFS; i++) {
     target[i] = joint_default_state[i];
+  }
+
+  // Initialize cog_target and cog_traj to 0s
+  bzero((void *)&cog_target,sizeof(cog_target));
+  bzero((void *)&cog_traj,sizeof(cog_traj));
 
   // go to the target using inverse dynamics (ID)
   if (!go_target_wait_ID(target)) 
@@ -133,21 +131,46 @@ static int init_balance_task(void)
 
   start_time = task_servo_time;
   printf("start time = %.3f, task_servo_time = %.3f\n", 
-   start_time, task_servo_time);
+    start_time, task_servo_time);
 
   // start data collection
   scd();
 
-  // state machine starts at ASSIGN_COG_TARGET
-  which_step = ASSIGN_COG_TARGET_RIGHT;
+  // next_step() will take us to step 0 and initialize properly
+  which_step = -1;
+  next_step();
 
   return TRUE;
 }
 
+/*
+  Computes desired joint state from target joint state using min jerk movement.
+*/
+static void min_jerk_joints()
+{
+  int i;
+  for (i=1; i<=N_DOFS; ++i) {
+    min_jerk_next_step(joint_des_state[i].th,
+     joint_des_state[i].thd,
+     joint_des_state[i].thdd,
+     target[i].th,
+     target[i].thd,
+     target[i].thdd,
+     time_to_go,
+     delta_t,
+     &(joint_des_state[i].th),
+     &(joint_des_state[i].thd),
+     &(joint_des_state[i].thdd));
+  }
+}
 
+/*
+  Computes desired trajectory of the center of gravity using min jerk movement.
+*/
 static void min_jerk_cog()
 {
-  for (int i=1; i<=N_CART; ++i) {
+  int i;
+  for (i=1; i<=N_CART; ++i) {
     min_jerk_next_step(
       cog_traj.x[i],
       cog_traj.xd[i],
@@ -163,248 +186,135 @@ static void min_jerk_cog()
   }
 }
 
-static void min_jerk_joints()
+/*
+  Moves the center of gravity to the cartesian coordinates (x, y, z).
+*/
+static void move_cog(float x, float y, float z)
 {
-  for (int i = 1; i <= N_DOFS; ++i) {
-    SL_DJstate &joint_ = joint_des_state[i];
-    SL_DJstate &target_ = target[i];
-    min_jerk_next_step(
-        joint_.th,
-        joint_.thd,
-        joint_.thdd,
-        target_.th,
-        target_.thd,
-        target_.thdd,
-        time_to_go,
-        delta_t,
-        &joint_.th,
-        &joint_.thd,
-        &joint_.thdd
-    );
-  }
-}
+  double kp = 0.1;
 
-
-static Steps time_step(Steps current_step, Steps next_step, bool should_freeze=false)
-{
-  time_to_go -= delta_t;
-  if (time_to_go <= 0) {
-    if (should_freeze) {
-      freeze();
-    } else {
-      return next_step;
-    }
-  }
-  return current_step;
-}
-
-
-static void cog_assignment(float x, float y, float z)
-{
-  bzero((void *)&cog_target,sizeof(cog_target));
+  compute_cog_kinematics(stat, TRUE, FALSE, TRUE, Jccogp, NJccog);
 
   cog_target.x[_X_] = x;
   cog_target.x[_Y_] = y;
   cog_target.x[_Z_] = z;
-
-  for (int i=1; i<=6; ++i) {
-    stat[RIGHT_FOOT][i] = TRUE;
-    stat[LEFT_FOOT][i] = TRUE;
-  }
-
-  // the structure cog_des has the current position of the COG computed from the
-  // joint_des_state of the robot. cog_des should track cog_traj
-  bzero((void *)&cog_traj,sizeof(cog_traj));
-  for (int i=1; i<=N_CART; ++i) {
-    cog_traj.x[i] = cog_des.x[i];
-  }
-}
-
-
-static void cog_computation()
-{
-  double kp = 0.1;
-  compute_cog_kinematics(stat, TRUE, FALSE, TRUE, Jccogp, NJccog);
   min_jerk_cog();
 
   for (int i=1; i<=N_CART; ++i){
     cog_ref.xd[i] = kp*(cog_traj.x[i] - cog_des.x[i]) + cog_traj.xd[i];
     cog_ref_xd_mat[i] = cog_ref.xd[i];    
   }
-
+  
   mat_vec_mult(Jccogp, cog_ref_xd_mat, thd);
 
   // compute the joint_des_state[i].th and joint_des_state[i].thd  
   for (int i=1; i<=N_DOFS; ++i) {
-
-    // intialize to zero
-    joint_des_state[i].thd  = 0;
-    joint_des_state[i].thdd = 0;
-    joint_des_state[i].uff  = 0;
-
     joint_des_state[i].th = thd[i] * delta_t + joint_des_state[i].th;
     joint_des_state[i].thd = thd[i];
     joint_des_state[i].thdd = 0;
     joint_des_state[i].uff  = 0;
   }
-}
 
-
-static Steps state_assign_cog_target_right()
-{
-  cog_assignment(
-    cart_des_state[RIGHT_FOOT].x[_X_] * 1.2,
-    cart_des_state[RIGHT_FOOT].x[_Y_],
-    cart_des_state[RIGHT_FOOT].x[_Z_]
-  );
-
-  // time to go
-  time_to_go = 10.0;
-  // time_to_go = 5.0;
-
-  // switch to next step of state machine
-  return MOVE_COG_TARGET_RIGHT;
-}
-
-
-static Steps state_move_cog_target_right()
-{
-  cog_computation();
-  // this is a special inverse dynamics computation for a free standing robot
   inverseDynamicsFloat(delta_t, stat, TRUE, joint_des_state, NULL, NULL, fc);
-  return time_step(MOVE_COG_TARGET_RIGHT, ASSIGN_JOINT_LEFT_LEG_UP);
 }
 
-
-static Steps state_assign_joint_left_leg_up()
+/*
+  Go to the next step and prepare for it.
+*/
+static void next_step()
 {
-  // initialize the target structure from the joint_des_state
-  for (int i=1; i<=N_DOFS; ++i) {
-    target[i] = joint_des_state[i];
+  // Go to the next step, repeat cycle if done
+  which_step = (which_step + 1) % num_steps;
+  time_to_go = duration;
+
+  // TODO: insert freeze condition.
+
+  /* This could go in another function if the preparations required
+  for the next steps get more complicated */
+  if (which_step == COG_RIGHT || which_step == COG_LEFT) {
+    // initialize the cog trajectory
+      for (int i=1; i<=N_CART; ++i) {
+        cog_traj.x[i] = cog_des.x[i];
+      }
+  } else {
+    //time_to_go += 5;
+    // initialize the joints trajectory/target
+    for (int i=1; i<=N_DOFS; ++i) {
+      target[i] = joint_des_state[i];
+    }
   }
-
-  target[L_HFE].th =  0.6;
-  target[L_HAA].th = -0.4;
-
-  // time_to_go = 10.0;
-  time_to_go = 5.0;
-
-  return MOVE_JOINT_LEFT_LEG_UP;
 }
-
-static Steps state_move_joint_left_leg_up()
-{
-
-  min_jerk_joints();
-  return time_step(MOVE_JOINT_LEFT_LEG_UP, ASSIGN_JOINT_LEFT_LEG_DOWN);
-}
-
-
-static Steps state_assign_joint_left_leg_down()
-{
-  for (int i=1; i<=N_DOFS; ++i) {
-    target[i] = joint_des_state[i];
-  }
-
-  target[L_HAA].th = -0.25;
-  target[R_HFE].th = 0.2;
-  target[R_AFE].th = 0.05;
-
-  time_to_go = 5.0;
-
-  return MOVE_JOINT_LEFT_LEG_DOWN;
-}
-
-static Steps state_move_joint_left_leg_down()
-{
-  min_jerk_joints();
-  return time_step(MOVE_JOINT_LEFT_LEG_DOWN, ASSIGN_COG_TARGET_LEFT);
-}
-
-static Steps state_assign_cog_target_left()
-{
-  cog_assignment(
-      cart_des_state[LEFT_FOOT].x[_X_],
-      cart_des_state[LEFT_FOOT].x[_Y_],
-      cart_des_state[LEFT_FOOT].x[_Z_]
-  );
-  time_to_go = 10.0;
-  return MOVE_COG_TARGET_LEFT;
-}
-
-
-static Steps state_move_cog_target_left()
-{
-  cog_computation();
-  // this is a special inverse dynamics computation for a free standing robot
-  inverseDynamicsFloat(delta_t, stat, TRUE, joint_des_state, NULL, NULL, fc);
-  return time_step(MOVE_COG_TARGET_LEFT, ASSIGN_JOINT_RIGHT_LEG_UP);
-}
-
-
-static Steps state_assign_joint_right_leg_up()
-{
-  // initialize the target structure from the joint_des_state
-  for (int i=1; i<=N_DOFS; ++i) {
-    target[i] = joint_des_state[i];
-  }
-
-  target[L_HFE].th =  0.6;
-  target[R_HFE].th =  0.6;
-  target[R_HAA].th = -0.4;
-
-  time_to_go = 10.0;
-
-  return MOVE_JOINT_RIGHT_LEG_UP;
-}
-
-static Steps state_move_joint_right_leg_up()
-{
-
-  min_jerk_joints();
-  return time_step(MOVE_JOINT_RIGHT_LEG_UP, ASSIGN_JOINT_RIGHT_LEG_DOWN);
-}
-
-
-static Steps state_assign_joint_right_leg_down()
-{
-  for (int i=1; i<=N_DOFS; ++i) {
-    target[i] = joint_des_state[i];
-  }
-
-  target[R_HAA].th = -0.25;
-
-  time_to_go = 10.0;
-
-  return MOVE_JOINT_RIGHT_LEG_DOWN;
-}
-
-static Steps state_move_joint_right_leg_down()
-{
-  min_jerk_joints();
-  return time_step(MOVE_JOINT_RIGHT_LEG_DOWN, ASSIGN_COG_TARGET_RIGHT);
-}
-
-
-
 
 static int run_balance_task(void)
 {
+  int i;
+  float x, y, z;
 
+  // XXX: remove this when running on real nao!!
   printf("%d, %f\n", which_step, time_to_go);
+
   switch (which_step) {
-    case ASSIGN_COG_TARGET_RIGHT     : which_step = state_assign_cog_target_right();    break;
-    case MOVE_COG_TARGET_RIGHT       : which_step = state_move_cog_target_right();      break;
-    case ASSIGN_JOINT_LEFT_LEG_UP    : which_step = state_assign_joint_left_leg_up();   break;
-    case MOVE_JOINT_LEFT_LEG_UP      : which_step = state_move_joint_left_leg_up();     break;
-    case ASSIGN_JOINT_LEFT_LEG_DOWN  : which_step = state_assign_joint_left_leg_down(); break;
-    case MOVE_JOINT_LEFT_LEG_DOWN    : which_step = state_move_joint_left_leg_down();   break;
-    case ASSIGN_COG_TARGET_LEFT      : which_step = state_assign_cog_target_left();     break;
-    case MOVE_COG_TARGET_LEFT        : which_step = state_move_cog_target_left();       break;
-    case ASSIGN_JOINT_RIGHT_LEG_UP   : which_step = state_assign_joint_right_leg_up();   break;
-    case MOVE_JOINT_RIGHT_LEG_UP     : which_step = state_move_joint_right_leg_up();     break;
-    case ASSIGN_JOINT_RIGHT_LEG_DOWN : which_step = state_assign_joint_right_leg_down(); break;
-    case MOVE_JOINT_RIGHT_LEG_DOWN   : which_step = state_move_joint_right_leg_down();   break;
+    case COG_RIGHT:
+      x = cart_des_state[RIGHT_FOOT].x[_X_] * 1.2;
+      y = cart_des_state[RIGHT_FOOT].x[_Y_];
+      z = cart_des_state[RIGHT_FOOT].x[_Z_];
+      move_cog(x, y, z);
+      break;
+
+    case LEFT_LEG_UP:
+      target[L_HFE].th =  0.6;
+      target[L_HAA].th = -0.4;
+      min_jerk_joints();
+      break;
+
+    case LEFT_LEG_DOWN:
+      target[L_HAA].th = -0.25;
+      target[R_HFE].th = 0.2;
+      target[R_AFE].th = 0.05;
+      min_jerk_joints();
+      break;
+
+    case COG_LEFT:
+      x = cart_des_state[LEFT_FOOT].x[_X_];
+      y = cart_des_state[LEFT_FOOT].x[_Y_];
+      z = cart_des_state[LEFT_FOOT].x[_Z_];
+      move_cog(x, y, z);
+      break;
+
+    case RIGHT_LEG_UP:
+      /*
+      target[L_HFE].th =  0.6;
+      target[R_HFE].th =  0.6;
+      target[R_HAA].th = -0.4;
+      */
+      target[R_HFE].th =  0.6;
+      target[R_HAA].th = -0.4;
+      min_jerk_joints();
+      break;
+
+    case RIGHT_LEG_DOWN:
+      /*
+      target[R_HAA].th = -0.25;
+      */
+      target[R_HAA].th = -0.25;
+      target[L_HFE].th = 0.2;
+      target[L_AFE].th = 0.05;
+      min_jerk_joints();
+      break;
+
+    default:
+      /* FIX_POSTURE_1 and FIX_POSTURE_2 */
+      for (i=1; i<=N_DOFS; i++) {
+        target[i] = joint_default_state[i];
+      }
+      min_jerk_joints();
+      break;
+  }
+
+  // time_step
+  time_to_go -= delta_t;
+  if (time_to_go <= 0) {
+    next_step();
   }
 
   return TRUE;
