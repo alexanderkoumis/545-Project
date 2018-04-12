@@ -75,8 +75,9 @@ static int  min_jerk_next_step (double x,double xd, double xdd, double t, double
 /*** Added functions for the project ***/
 static void min_jerk_joints();
 static void min_jerk_cog();
-static void move_cog(float x, float y, float z);
+static void move_cog();
 static void next_step();
+static void assign_next_target();
 
 
 void add_balance_task( void )
@@ -189,15 +190,12 @@ static void min_jerk_cog()
 /*
   Moves the center of gravity to the cartesian coordinates (x, y, z).
 */
-static void move_cog(float x, float y, float z)
+static void move_cog()
 {
   double kp = 0.1;
 
   compute_cog_kinematics(stat, TRUE, FALSE, TRUE, Jccogp, NJccog);
 
-  cog_target.x[_X_] = x;
-  cog_target.x[_Y_] = y;
-  cog_target.x[_Z_] = z;
   min_jerk_cog();
 
   for (int i=1; i<=N_CART; ++i){
@@ -229,77 +227,61 @@ static void next_step()
 
   // TODO: insert freeze condition.
 
-  /* This could go in another function if the preparations required
-  for the next steps get more complicated */
+  /* Initialize target/trajectory for next step */
   if (which_step == COG_RIGHT || which_step == COG_LEFT) {
     // initialize the cog trajectory
-      for (int i=1; i<=N_CART; ++i) {
-        cog_traj.x[i] = cog_des.x[i];
-      }
+    for (int i=1; i<=N_CART; ++i) {
+      cog_traj.x[i] = cog_des.x[i];
+    }
   } else {
-    //time_to_go += 5;
     // initialize the joints trajectory/target
     for (int i=1; i<=N_DOFS; ++i) {
       target[i] = joint_des_state[i];
     }
   }
+
+  // Assign the target for next step
+  assign_next_target();
 }
 
-static int run_balance_task(void)
+static void assign_next_target()
 {
   int i;
-  float x, y, z;
-
-  // XXX: remove this when running on real nao!!
-  printf("%d, %f\n", which_step, time_to_go);
 
   switch (which_step) {
     case COG_RIGHT:
-      x = cart_des_state[RIGHT_FOOT].x[_X_] * 1.2;
-      y = cart_des_state[RIGHT_FOOT].x[_Y_];
-      z = cart_des_state[RIGHT_FOOT].x[_Z_];
-      move_cog(x, y, z);
+      cog_target.x[_X_] = cart_des_state[RIGHT_FOOT].x[_X_] * 1.2;
+      cog_target.x[_Y_] = cart_des_state[RIGHT_FOOT].x[_Y_];
+      cog_target.x[_Z_] = cart_des_state[RIGHT_FOOT].x[_Z_];
       break;
 
     case LEFT_LEG_UP:
-      target[L_HFE].th =  0.6;
-      target[L_HAA].th = -0.4;
-      min_jerk_joints();
+      target[L_HFE].th +=  0.6;
+      target[L_KFE].th -=  0.3;
+      target[L_AFE].th -=  0.3;
       break;
 
     case LEFT_LEG_DOWN:
-      target[L_HAA].th = -0.25;
-      target[R_HFE].th = 0.2;
-      target[R_AFE].th = 0.05;
-      min_jerk_joints();
+      target[L_HFE].th -=  0.6;
+      target[L_KFE].th +=  0.3;
+      target[L_AFE].th +=  0.3;
       break;
 
     case COG_LEFT:
-      x = cart_des_state[LEFT_FOOT].x[_X_];
-      y = cart_des_state[LEFT_FOOT].x[_Y_];
-      z = cart_des_state[LEFT_FOOT].x[_Z_];
-      move_cog(x, y, z);
+      cog_target.x[_X_] = cart_des_state[LEFT_FOOT].x[_X_];
+      cog_target.x[_Y_] = cart_des_state[LEFT_FOOT].x[_Y_];
+      cog_target.x[_Z_] = cart_des_state[LEFT_FOOT].x[_Z_];
       break;
 
     case RIGHT_LEG_UP:
-      /*
-      target[L_HFE].th =  0.6;
       target[R_HFE].th =  0.6;
       target[R_HAA].th = -0.4;
-      */
-      target[R_HFE].th =  0.6;
-      target[R_HAA].th = -0.4;
-      min_jerk_joints();
       break;
 
     case RIGHT_LEG_DOWN:
-      /*
-      target[R_HAA].th = -0.25;
-      */
       target[R_HAA].th = -0.25;
       target[L_HFE].th = 0.2;
       target[L_AFE].th = 0.05;
-      min_jerk_joints();
       break;
 
     default:
@@ -307,8 +289,21 @@ static int run_balance_task(void)
       for (i=1; i<=N_DOFS; i++) {
         target[i] = joint_default_state[i];
       }
-      min_jerk_joints();
       break;
+  }
+}
+
+static int run_balance_task(void)
+{
+
+  // XXX: remove this when running on real nao!!
+  printf("%d, %f\n", which_step, time_to_go);
+
+  /* Initialize target/trajectory for next step */
+  if (which_step == COG_RIGHT || which_step == COG_LEFT) {
+    move_cog();
+  } else {
+    min_jerk_joints();
   }
 
   // time_step
