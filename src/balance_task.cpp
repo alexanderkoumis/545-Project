@@ -34,7 +34,7 @@ static SL_Cstate   cog_target;
 static SL_Cstate   cog_traj;
 static SL_Cstate   cog_ref;
 static double      delta_t = 0.01;
-static double      duration = 10.0;
+static double      duration = 5.0;
 static double      time_to_go;
 static int         which_step;
 
@@ -48,8 +48,13 @@ enum Steps {
   RIGHT_LEG_UP,
   RIGHT_LEG_DOWN,
   FIX_POSTURE_2,
+  DONE,
 };
-static int num_steps = FIX_POSTURE_2 + 1;
+static int num_steps = DONE;
+
+#define IS_COG_STEP(STEP)  \
+	(STEP == COG_RIGHT) || \
+	(STEP == COG_LEFT)
 
 // variables for COG control
 static iMatrix     stat;
@@ -127,8 +132,8 @@ static int init_balance_task(void)
   bzero((void *)&cog_traj,sizeof(cog_traj));
 
   // go to the target using inverse dynamics (ID)
-  if (!go_target_wait_ID(target)) 
-    return FALSE;
+  if (!go_target_wait_ID(target))
+  	return FALSE;
 
   start_time = task_servo_time;
   printf("start time = %.3f, task_servo_time = %.3f\n", 
@@ -227,19 +232,6 @@ static void next_step()
 
   // TODO: insert freeze condition.
 
-  /* Initialize target/trajectory for next step */
-  if (which_step == COG_RIGHT || which_step == COG_LEFT) {
-    // initialize the cog trajectory
-    for (int i=1; i<=N_CART; ++i) {
-      cog_traj.x[i] = cog_des.x[i];
-    }
-  } else {
-    // initialize the joints trajectory/target
-    for (int i=1; i<=N_DOFS; ++i) {
-      target[i] = joint_des_state[i];
-    }
-  }
-
   // Assign the target for next step
   assign_next_target();
 }
@@ -248,44 +240,73 @@ static void assign_next_target()
 {
   int i;
 
+  // Initialize variables holding the target state
+  for (int i=1; i<=2*N_CART; ++i) {
+      cog_traj.x[i] = cog_des.x[i];
+  }
+  for (int i=1; i<=N_DOFS; ++i) {
+      target[i] = joint_des_state[i];
+  }
+
+  /* Modifiy next target state manually for each step to
+     simulate a walking movement (or whatever you want). */
   switch (which_step) {
+
+  	/*******************
+    **	LEFT LEG TURN **
+    ********************/
     case COG_RIGHT:
-      cog_target.x[_X_] = cart_des_state[RIGHT_FOOT].x[_X_] * 1.2;
-      cog_target.x[_Y_] = cart_des_state[RIGHT_FOOT].x[_Y_];
+      /* Move center of gravity to the right */
+      cog_target.x[_X_] = cart_des_state[RIGHT_FOOT].x[_X_];
+  	  cog_target.x[_Y_] = cart_des_state[RIGHT_FOOT].x[_Y_];
       cog_target.x[_Z_] = cart_des_state[RIGHT_FOOT].x[_Z_];
       break;
 
     case LEFT_LEG_UP:
-      target[L_HFE].th +=  0.6;
-      target[L_KFE].th -=  0.3;
-      target[L_AFE].th -=  0.3;
+      /* Lift left leg up */
+      target[L_HFE].th += 0.9;
+      target[L_KFE].th += 0.9;
+      target[L_AFE].th += 0.2;
       break;
 
     case LEFT_LEG_DOWN:
-      target[L_HFE].th -=  0.6;
-      target[L_KFE].th +=  0.3;
-      target[L_AFE].th +=  0.3;
+      /* Bend right leg to lower body */
+      target[R_HFE].th += 0.1;
+      target[R_KFE].th += 0.7;
+      target[R_AFE].th += 0.6;
       break;
 
+    case FIX_POSTURE_1:
+      /* ??? */
+      break;
+
+    /********************
+    **	RIGHT LEG TURN **
+    *********************/
     case COG_LEFT:
-      cog_target.x[_X_] = cart_des_state[LEFT_FOOT].x[_X_];
-      cog_target.x[_Y_] = cart_des_state[LEFT_FOOT].x[_Y_];
-      cog_target.x[_Z_] = cart_des_state[LEFT_FOOT].x[_Z_];
+	  cog_target.x[_X_] = cart_des_state[LEFT_FOOT].x[_X_];
+	  cog_target.x[_Y_] = cart_des_state[LEFT_FOOT].x[_Y_];
+	  cog_target.x[_Z_] = cart_des_state[LEFT_FOOT].x[_Z_];
       break;
 
     case RIGHT_LEG_UP:
-      target[R_HFE].th =  0.6;
-      target[R_HAA].th = -0.4;
+      // ???
       break;
 
     case RIGHT_LEG_DOWN:
-      target[R_HAA].th = -0.25;
-      target[L_HFE].th = 0.2;
-      target[L_AFE].th = 0.05;
+      // ???
+      break;
+
+    case FIX_POSTURE_2:
+      // ???
+      break;
+
+    case DONE:
+      // Do nothing
+      time_to_go = 0;
       break;
 
     default:
-      /* FIX_POSTURE_1 and FIX_POSTURE_2 */
       for (i=1; i<=N_DOFS; i++) {
         target[i] = joint_default_state[i];
       }
@@ -300,10 +321,10 @@ static int run_balance_task(void)
   printf("%d, %f\n", which_step, time_to_go);
 
   /* Initialize target/trajectory for next step */
-  if (which_step == COG_RIGHT || which_step == COG_LEFT) {
-    move_cog();
+  if (IS_COG_STEP(which_step)) {
+  	move_cog();
   } else {
-    min_jerk_joints();
+  	min_jerk_joints();
   }
 
   // time_step
@@ -317,8 +338,8 @@ static int run_balance_task(void)
 
 static int change_balance_task(void)
 {
-  int    ivar;
-  double dvar;
+  int    ivar = 0;
+  double dvar = 0;
 
   get_int("This is how to enter an integer variable",ivar,&ivar);
   get_double("This is how to enter a double variable",dvar,&dvar);
