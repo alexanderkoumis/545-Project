@@ -14,6 +14,8 @@ Remarks:
 #include "SL_system_headers.h"
 
 #include <fstream>
+#include <map>
+#include <string>
 /* SL includes */
 #include "SL.h"
 #include "SL_user.h"
@@ -34,22 +36,27 @@ static SL_Cstate   cog_target;
 static SL_Cstate   cog_traj;
 static SL_Cstate   cog_ref;
 static double      delta_t = 0.01;
-static double      duration = 10.0;
+static double      duration = 6.0;
 static double      time_to_go;
 static int         which_step;
 
 // possible states of a state machine
 enum Steps {
-  COG_RIGHT,
+  COG_RIGHT_1,
   LEFT_LEG_UP,
   LEFT_LEG_DOWN,
+  COG_LEFT_1,
   FIX_POSTURE_1,
-  COG_LEFT,
+  COG_LEFT_2,
   RIGHT_LEG_UP,
   RIGHT_LEG_DOWN,
-  FIX_POSTURE_2,
+  COG_RIGHT_2,
+  FIX_POSTURE_2
 };
 static int num_steps = FIX_POSTURE_2 + 1;
+
+
+static std::map<int, std::string> state_str_map;
 
 // variables for COG control
 static iMatrix     stat;
@@ -88,12 +95,27 @@ void add_balance_task( void )
 
 }
 
+static void fill_str_map()
+{
+  state_str_map[COG_RIGHT_1] = "COG_RIGHT_1";
+  state_str_map[COG_RIGHT_2] = "COG_RIGHT_2";
+  state_str_map[LEFT_LEG_UP] = "LEFT_LEG_UP";
+  state_str_map[LEFT_LEG_DOWN] = "LEFT_LEG_DOWN";
+  state_str_map[COG_LEFT_1] = "COG_LEFT_1";
+  state_str_map[FIX_POSTURE_1] = "FIX_POSTURE_1";
+  state_str_map[COG_LEFT_2] = "COG_LEFT_2";
+  state_str_map[RIGHT_LEG_UP] = "RIGHT_LEG_UP";
+  state_str_map[RIGHT_LEG_DOWN] = "RIGHT_LEG_DOWN";
+  state_str_map[FIX_POSTURE_2] = "FIX_POSTURE_2";
+}
+
+
 static int init_balance_task(void)
 {
   int j, i;
   int ans;
   static int firsttime = TRUE;
-  
+  fill_str_map();
   if (firsttime) {
     firsttime = FALSE;
 
@@ -231,7 +253,8 @@ static void next_step()
 
   /* This could go in another function if the preparations required
   for the next steps get more complicated */
-  if (which_step == COG_RIGHT || which_step == COG_LEFT) {
+  if (which_step == COG_RIGHT_1 || which_step == COG_RIGHT_2 || which_step == COG_LEFT_1 || which_step == COG_LEFT_2) {
+  // if (which_step == COG_RIGHT_1 || which_step == COG_RIGHT_2 || which_step == COG_LEFT_1) {
     // initialize the cog trajectory
       for (int i=1; i<=N_CART; ++i) {
         cog_traj.x[i] = cog_des.x[i];
@@ -251,54 +274,75 @@ static int run_balance_task(void)
   float x, y, z;
 
   // XXX: remove this when running on real nao!!
-  printf("%d, %f\n", which_step, time_to_go);
+  // printf("%d, %f\n", which_step, time_to_go);
+  printf("%s, %f\n", state_str_map[which_step].c_str(), time_to_go);
 
   switch (which_step) {
-    case COG_RIGHT:
-      x = cart_des_state[RIGHT_FOOT].x[_X_] * 1.2;
+    case COG_RIGHT_1:
+      x = cart_des_state[RIGHT_FOOT].x[_X_] * 1.1;
+      y = cart_des_state[RIGHT_FOOT].x[_Y_];
+      z = cart_des_state[RIGHT_FOOT].x[_Z_];
+      move_cog(x, y, z);
+      break;
+
+    case COG_RIGHT_2:
+      x = cart_des_state[RIGHT_FOOT].x[_X_] * 0.8;
       y = cart_des_state[RIGHT_FOOT].x[_Y_];
       z = cart_des_state[RIGHT_FOOT].x[_Z_];
       move_cog(x, y, z);
       break;
 
     case LEFT_LEG_UP:
-      target[L_HFE].th =  0.6;
-      target[L_HAA].th = -0.4;
+      target[L_AFE].th = -0.3;
+      target[L_AAA].th = 0.27;
+      target[L_HFE].th = 0.5;
       min_jerk_joints();
       break;
 
     case LEFT_LEG_DOWN:
-      target[L_HAA].th = -0.25;
-      target[R_HFE].th = 0.2;
-      target[R_AFE].th = 0.05;
+
+      target[R_AAA] = joint_default_state[R_AAA];
+      target[R_AFE] = joint_default_state[R_AFE];
+      target[R_KFE] = joint_default_state[R_KFE];
+      target[R_HAA] = joint_default_state[R_HAA];
+      target[R_FB] = joint_default_state[R_FB];
+      target[L_AAA].th = 0.045;
+      target[L_AFE].th = -0.42;
       min_jerk_joints();
       break;
 
-    case COG_LEFT:
-      x = cart_des_state[LEFT_FOOT].x[_X_];
+    case COG_LEFT_1:
+
+      x = cart_des_state[LEFT_FOOT].x[_X_] * 0.6;
+      y = cart_des_state[LEFT_FOOT].x[_Y_] - 0.03;
+      z = cart_des_state[LEFT_FOOT].x[_Z_];
+      move_cog(x, y, z);
+      break;
+
+    case COG_LEFT_2:
+
+      x = cart_des_state[LEFT_FOOT].x[_X_] * 1.1;
       y = cart_des_state[LEFT_FOOT].x[_Y_];
       z = cart_des_state[LEFT_FOOT].x[_Z_];
       move_cog(x, y, z);
       break;
 
     case RIGHT_LEG_UP:
-      /*
-      target[L_HFE].th =  0.6;
-      target[R_HFE].th =  0.6;
-      target[R_HAA].th = -0.4;
-      */
-      target[R_HFE].th =  0.6;
-      target[R_HAA].th = -0.4;
+
+      target[R_AFE].th = -0.3;
+      target[R_AAA].th = -0.27;
+      target[R_HFE].th = 0.5;
       min_jerk_joints();
       break;
 
     case RIGHT_LEG_DOWN:
-      /*
-      target[R_HAA].th = -0.25;
-      */
-      target[R_HAA].th = -0.25;
-      target[L_HFE].th = 0.2;
-      target[L_AFE].th = 0.05;
+      target[L_AAA] = joint_default_state[L_AAA];
+      target[L_AFE] = joint_default_state[L_AFE];
+      target[L_KFE] = joint_default_state[L_KFE];
+      target[L_HAA] = joint_default_state[L_HAA];
+      target[L_FB] = joint_default_state[L_FB];
+      target[R_AAA].th = 0.045;
+      target[R_AFE].th = -0.42;
       min_jerk_joints();
       break;
 
