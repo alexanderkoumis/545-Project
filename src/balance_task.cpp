@@ -34,7 +34,7 @@ static SL_Cstate   cog_target;
 static SL_Cstate   cog_traj;
 static SL_Cstate   cog_ref;
 static double      delta_t = 0.01;
-static double      duration = 5.0;
+static double      duration = 4.0;
 static double      time_to_go;
 static int         which_step;
 
@@ -43,18 +43,16 @@ enum Steps {
   COG_RIGHT,
   LEFT_LEG_UP,
   LEFT_LEG_DOWN,
-  FIX_POSTURE_1,
   COG_LEFT,
   RIGHT_LEG_UP,
   RIGHT_LEG_DOWN,
-  FIX_POSTURE_2,
   DONE,
 };
 static int num_steps = DONE;
 
 #define IS_COG_STEP(STEP)  \
-	(STEP == COG_RIGHT) || \
-	(STEP == COG_LEFT)
+  (STEP == COG_RIGHT) || \
+  (STEP == COG_LEFT)
 
 // variables for COG control
 static iMatrix     stat;
@@ -133,7 +131,7 @@ static int init_balance_task(void)
 
   // go to the target using inverse dynamics (ID)
   if (!go_target_wait_ID(target))
-  	return FALSE;
+    return FALSE;
 
   start_time = task_servo_time;
   printf("start time = %.3f, task_servo_time = %.3f\n", 
@@ -248,57 +246,59 @@ static void assign_next_target()
       target[i] = joint_des_state[i];
   }
 
-  /* Modifiy next target state manually for each step to
-     simulate a walking movement (or whatever you want). */
+  /*
+  Modifiy next target state manually for each step to simulate a
+  walking movement (or whatever you want).
+
+  The following values will perform a single step using the left leg.
+  */
   switch (which_step) {
 
-  	/*******************
-    **	LEFT LEG TURN **
-    ********************/
     case COG_RIGHT:
       /* Move center of gravity to the right */
-      cog_target.x[_X_] = cart_des_state[RIGHT_FOOT].x[_X_];
-  	  cog_target.x[_Y_] = cart_des_state[RIGHT_FOOT].x[_Y_];
-      cog_target.x[_Z_] = cart_des_state[RIGHT_FOOT].x[_Z_];
+      cog_target.x[_X_] = cart_state[RIGHT_FOOT].x[_X_];
       break;
 
     case LEFT_LEG_UP:
       /* Lift left leg up */
-      target[L_HFE].th += 0.9;
-      target[L_KFE].th += 0.9;
+      target[L_HFE].th += 0.8;
+      target[L_KFE].th += 0.8;
       target[L_AFE].th += 0.2;
       break;
 
     case LEFT_LEG_DOWN:
       /* Bend right leg to lower body */
       target[R_HFE].th += 0.1;
-      target[R_KFE].th += 0.7;
-      target[R_AFE].th += 0.6;
+      target[R_KFE].th += 0.6;
+      target[R_AFE].th += 0.5;
+
+      target[L_AAA].th -= 0.15;
       break;
 
-    case FIX_POSTURE_1:
-      /* ??? */
-      break;
-
-    /********************
-    **	RIGHT LEG TURN **
-    *********************/
     case COG_LEFT:
-	  cog_target.x[_X_] = cart_des_state[LEFT_FOOT].x[_X_];
-	  cog_target.x[_Y_] = cart_des_state[LEFT_FOOT].x[_Y_];
-	  cog_target.x[_Z_] = cart_des_state[LEFT_FOOT].x[_Z_];
+      cog_target.x[_X_] = cart_state[LEFT_FOOT].x[_X_] + 0.01;  // less left
+      cog_target.x[_Y_] = cart_state[LEFT_FOOT].x[_Y_] + 0.01;  // more forward
       break;
 
     case RIGHT_LEG_UP:
-      // ???
+      /* Straighten left leg */
+      target[L_HFE].th -= 0.5;
+      target[L_KFE].th -= 0.2;
+      target[L_AFE].th -= 0.1;
+
+      /* Carry right leg (bend a little) */
+      target[R_HFE].th += 0.5;
+      target[R_KFE].th += 0.5;
+      target[R_AFE].th += 0.2;
+      /* I don't know lol */
+      target[R_FB].th  += 0.1;
       break;
 
     case RIGHT_LEG_DOWN:
-      // ???
-      break;
-
-    case FIX_POSTURE_2:
-      // ???
+      /* Straighten out (go to default state) */
+      for (i=1; i<=N_DOFS; i++) {
+        target[i] = joint_default_state[i];
+      }
       break;
 
     case DONE:
@@ -307,9 +307,8 @@ static void assign_next_target()
       break;
 
     default:
-      for (i=1; i<=N_DOFS; i++) {
-        target[i] = joint_default_state[i];
-      }
+      // Do nothing
+      time_to_go = 0;
       break;
   }
 }
@@ -322,9 +321,9 @@ static int run_balance_task(void)
 
   /* Initialize target/trajectory for next step */
   if (IS_COG_STEP(which_step)) {
-  	move_cog();
+    move_cog();
   } else {
-  	min_jerk_joints();
+    min_jerk_joints();
   }
 
   // time_step
