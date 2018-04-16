@@ -330,9 +330,8 @@ static int run_balance_task(void)
 
       target[R_HFE].th = 0.23;
       target[R_HAA].th = -0.2;
-      target[R_AAA].th = -0.44;
-      target[R_AFE].th = -0.3;
-      target[L_AFE].th = -0.25;
+      target[R_AAA].th = joint_default_state[R_AAA].th;
+      target[R_AFE].th = joint_default_state[R_AFE].th;
       target[L_HFE].th = 0.55;
       min_jerk_joints();
       break;
