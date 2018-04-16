@@ -47,7 +47,7 @@ enum Steps {
   LEFT_LEG_UP,
   LEFT_LEG_DOWN,
   // COG_LEFT,
-  // RIGHT_LEG_SCOOT_FORWARD,
+  RIGHT_LEG_SCOOT_FORWARD,
   FIX_POSTURE
 };
 static int num_steps = FIX_POSTURE + 1;
@@ -99,7 +99,7 @@ static void fill_str_map()
   state_str_map[LEFT_LEG_UP] = "LEFT_LEG_UP";
   state_str_map[LEFT_LEG_DOWN] = "LEFT_LEG_DOWN";
   // state_str_map[COG_LEFT] = "COG_LEFT";
-  // state_str_map[RIGHT_LEG_SCOOT_FORWARD] = "RIGHT_LEG_SCOOT_FORWARD";
+  state_str_map[RIGHT_LEG_SCOOT_FORWARD] = "RIGHT_LEG_SCOOT_FORWARD";
   state_str_map[FIX_POSTURE] = "FIX_POSTURE";
 }
 
@@ -326,16 +326,16 @@ static int run_balance_task(void)
     //   move_cog(x, y, z);
     //   break;
 
-    // case RIGHT_LEG_SCOOT_FORWARD:
+    case RIGHT_LEG_SCOOT_FORWARD:
 
-    //   target[R_HFE].th = 0.23;
-    //   target[R_HAA].th = -0.2;
-    //   target[R_AAA].th = -0.44;
-    //   target[R_AFE].th = -0.3;
-    //   target[L_AFE].th = -0.25;
-    //   target[L_HFE].th = 0.55;
-    //   min_jerk_joints();
-    //   break;
+      target[R_HFE].th = 0.23;
+      target[R_HAA].th = -0.2;
+      target[R_AAA].th = -0.44;
+      target[R_AFE].th = -0.3;
+      target[L_AFE].th = -0.25;
+      target[L_HFE].th = 0.55;
+      min_jerk_joints();
+      break;
 
     case FIX_POSTURE:
 
