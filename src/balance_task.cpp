@@ -146,7 +146,7 @@ static int init_balance_task(void)
     return FALSE;
 
   start_time = task_servo_time;
-  printf("start time = %.3f, task_servo_time = %.3f\n", 
+  // printf("start time = %.3f, task_servo_time = %.3f\n", 
     start_time, task_servo_time);
 
   // start data collection
@@ -267,7 +267,7 @@ static int run_balance_task(void)
   float x, y, z;
 
   // XXX: remove this when running on real nao!!
-  printf("%s, %f\n", state_str_map[which_step].c_str(), time_to_go);
+  // printf("%s, %f\n", state_str_map[which_step].c_str(), time_to_go);
 
   switch (which_step) {
 
@@ -299,17 +299,21 @@ static int run_balance_task(void)
       target[R_KFE].th = (target[R_KFE].th + joint_default_state[R_KFE].th) /2;
       target[R_HAA].th = (target[R_HAA].th + joint_default_state[R_HAA].th) /2;
       target[R_FB].th =  (target[R_FB].th + joint_default_state[R_FB].th) /2;
-      target[L_EB].th = 0.1;
+      // target[L_EB].th = 0.1;
+      target[L_EB].th = joint_default_state[L_EB];
+      target[L_SFE].th = joint_default_state[L_SFE].th
+      target[L_SAA].th = joint_default_state[L_SAA].th
       target[L_AAA].th = 0.15;
-      target[L_AFE].th = -0.23;
+      target[L_AFE].th = -0.3;
+      target[L_HAA].th -= -0.15;
       target[R_SAA].th = 0;
       min_jerk_joints();
       break;
 
     case COG_LEFT:
 
-      x = cart_des_state[LEFT_FOOT].x[_X_] * 0.85;
-      y = cart_des_state[LEFT_FOOT].x[_Y_] * 1.3;
+      x = cart_des_state[LEFT_FOOT].x[_X_] * 0.6;
+      y = cart_des_state[LEFT_FOOT].x[_Y_] * 1.2;
       z = cart_des_state[LEFT_FOOT].x[_Z_];
       move_cog(x, y, z);
       break;
@@ -334,7 +338,7 @@ static int run_balance_task(void)
       break;
 
     default:
-      printf("Error, default case reached\n");
+      // printf("Error, default case reached\n");
       freeze();
       break;
   }
