@@ -147,7 +147,7 @@ static int init_balance_task(void)
 
   start_time = task_servo_time;
   // printf("start time = %.3f, task_servo_time = %.3f\n", 
-    start_time, task_servo_time);
+    // start_time, task_servo_time);
 
   // start data collection
   scd();
@@ -293,19 +293,25 @@ static int run_balance_task(void)
 
     case LEFT_LEG_DOWN:
 
-      // Put the right leg half way between it's starting position and where it is now
-      target[R_AAA].th = (target[R_AAA].th + joint_default_state[R_AAA].th) /2;
-      target[R_AFE].th = (target[R_AFE].th + joint_default_state[R_AFE].th) /2;
-      target[R_KFE].th = (target[R_KFE].th + joint_default_state[R_KFE].th) /2;
-      target[R_HAA].th = (target[R_HAA].th + joint_default_state[R_HAA].th) /2;
-      target[R_FB].th =  (target[R_FB].th + joint_default_state[R_FB].th) /2;
+
+      static bool first = TRUE;
+      if (first) {
+        first = FALSE;
+        // Put the right leg half way between it's starting position and where it is now
+        target[R_AAA].th = (target[R_AAA].th + joint_default_state[R_AAA].th) /2;
+        target[R_AFE].th = (target[R_AFE].th + joint_default_state[R_AFE].th) /2;
+        target[R_KFE].th = (target[R_KFE].th + joint_default_state[R_KFE].th) /2;
+        target[R_HAA].th = (target[R_HAA].th + joint_default_state[R_HAA].th) /2;
+        target[R_FB].th =  (target[R_FB].th + joint_default_state[R_FB].th) /2;
+        target[L_HAA].th -= -0.13;
+      }
+
       // target[L_EB].th = 0.1;
-      target[L_EB].th = joint_default_state[L_EB];
-      target[L_SFE].th = joint_default_state[L_SFE].th
-      target[L_SAA].th = joint_default_state[L_SAA].th
+      target[L_EB].th = joint_default_state[L_EB].th;
+      target[L_SFE].th = joint_default_state[L_SFE].th;
+      target[L_SAA].th = joint_default_state[L_SAA].th;
       target[L_AAA].th = 0.15;
       target[L_AFE].th = -0.3;
-      target[L_HAA].th -= -0.15;
       target[R_SAA].th = 0;
       min_jerk_joints();
       break;
