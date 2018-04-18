@@ -268,7 +268,7 @@ static int run_balance_task(void)
   float x, y, z;
 
   // XXX: remove this when running on real nao!!
-  // printf("%s, %f\n", state_str_map[which_step].c_str(), time_to_go);
+  printf("%s, %f\n", state_str_map[which_step].c_str(), time_to_go);
 
   switch (which_step) {
 
@@ -294,27 +294,18 @@ static int run_balance_task(void)
 
     case LEFT_LEG_DOWN:
 
-
-      static bool first = TRUE;
-
-      if (first) {
-        first = FALSE;
-        // Put the right leg half way between it's starting position and where it is now
-        target[R_AAA].th = (target[R_AAA].th + joint_default_state[R_AAA].th) /2;
-        target[R_AFE].th = (target[R_AFE].th + joint_default_state[R_AFE].th) /2;
-        target[R_KFE].th = (target[R_KFE].th + joint_default_state[R_KFE].th) /2;
-        target[R_HAA].th = (target[R_HAA].th + joint_default_state[R_HAA].th) /2;
-        target[R_FB].th =  (target[R_FB].th + joint_default_state[R_FB].th) /2;
-        target[L_HAA].th -= -0.13;
-      }
-
-      // target[L_EB].th = 0.1;
+      target[R_AAA].th = 0.185102;
+      target[R_AFE].th = -0.05667;
+      target[R_KFE].th = 0.012903;
+      target[R_HAA].th = 0.137696;
+      target[R_FB].th = -0.014283;
+      target[R_SAA].th = 0;
       target[L_EB].th = joint_default_state[L_EB].th;
       target[L_SFE].th = joint_default_state[L_SFE].th;
       target[L_SAA].th = joint_default_state[L_SAA].th;
       target[L_AAA].th = 0.15;
+      // target[L_HAA].th -= 0.13;
       target[L_AFE].th = -0.3;
-      target[R_SAA].th = 0;
       min_jerk_joints();
       break;
 
@@ -330,9 +321,12 @@ static int run_balance_task(void)
 
       target[R_HFE].th = 0.23;
       target[R_HAA].th = -0.2;
-      target[R_AAA].th = joint_default_state[R_AAA].th;
+      target[R_AAA].th = -0.2;
       target[R_AFE].th = joint_default_state[R_AFE].th;
-      target[L_HFE].th = 0.55;
+      target[L_HFE].th = 0.0;
+      target[L_AFE].th = -0.1;
+      target[L_HAA].th = 0.1;
+      target[L_AAA].th = 0.0;
       min_jerk_joints();
       break;
 
