@@ -36,7 +36,7 @@ static SL_Cstate   cog_target;
 static SL_Cstate   cog_traj;
 static SL_Cstate   cog_ref;
 static double      delta_t = 0.01;
-static double      duration = 10.0;
+static double      duration = 7.0;
 static double      time_to_go;
 static int         which_step;
 static bool        arms_out = FALSE;
@@ -304,14 +304,14 @@ static int run_balance_task(void)
     case LEFT_LEG_DOWN:
 
       target[R_AAA].th = 0.185102;
-      target[R_AFE].th = -0.05667;
+      target[R_AFE].th = 0.05;
       target[R_KFE].th = 0.012903;
       target[R_HAA].th = 0.137696;
       target[R_FB].th = -0.014283;
       target[R_SAA].th = 0;
-      target[L_AAA].th = 0.15;
+      target[L_AAA].th = 0.3;
       target[L_HAA].th = -0.4;
-      target[L_AFE].th = -0.3;
+      target[L_AFE].th = -0.2;
       min_jerk_joints();
       break;
 
