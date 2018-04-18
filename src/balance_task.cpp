@@ -39,6 +39,7 @@ static double      delta_t = 0.01;
 static double      duration = 10.0;
 static double      time_to_go;
 static int         which_step;
+static bool        arms_out = FALSE;
 
 // possible states of a state machine
 enum Steps {
@@ -46,8 +47,9 @@ enum Steps {
   COG_RIGHT,
   LEFT_LEG_UP,
   LEFT_LEG_DOWN,
-  // COG_LEFT,
-  RIGHT_LEG_SCOOT_FORWARD,
+  COG_LEFT,
+  RIGHT_LEG_UP,
+  RIGHT_LEG_DOWN,
   FIX_POSTURE
 };
 static int num_steps = FIX_POSTURE + 1;
@@ -98,8 +100,9 @@ static void fill_str_map()
   state_str_map[COG_RIGHT] = "COG_RIGHT";
   state_str_map[LEFT_LEG_UP] = "LEFT_LEG_UP";
   state_str_map[LEFT_LEG_DOWN] = "LEFT_LEG_DOWN";
-  // state_str_map[COG_LEFT] = "COG_LEFT";
-  state_str_map[RIGHT_LEG_SCOOT_FORWARD] = "RIGHT_LEG_SCOOT_FORWARD";
+  state_str_map[COG_LEFT] = "COG_LEFT";
+  state_str_map[RIGHT_LEG_UP] = "RIGHT_LEG_UP";
+  state_str_map[RIGHT_LEG_DOWN] = "RIGHT_LEG_DOWN";
   state_str_map[FIX_POSTURE] = "FIX_POSTURE";
 }
 
@@ -241,13 +244,18 @@ static void next_step()
 {
   // Go to the next step, repeat cycle if done
   which_step = (which_step + 1) % num_steps;
+
+  // Only put out arms in the beginning
+  if (which_step == ARMS_OUT && arms_out == TRUE) {
+    which_step++;
+  }
+
   time_to_go = duration;
 
   // TODO: insert freeze condition.
 
   /* This could go in another function if the preparations required
   for the next steps get more complicated */
-  // if (which_step == COG_RIGHT || which_step == COG_LEFT) {
   if (which_step == COG_RIGHT) {
     // initialize the cog trajectory
       for (int i=1; i<=N_CART; ++i) {
@@ -268,7 +276,7 @@ static int run_balance_task(void)
   float x, y, z;
 
   // XXX: remove this when running on real nao!!
-  printf("%s, %f\n", state_str_map[which_step].c_str(), time_to_go);
+  // printf("%s, %f\n", state_str_map[which_step].c_str(), time_to_go);
 
   switch (which_step) {
 
@@ -279,6 +287,7 @@ static int run_balance_task(void)
       break;
 
     case COG_RIGHT:
+      arms_out = TRUE;
       x = cart_des_state[RIGHT_FOOT].x[_X_] * 1.2;
       y = cart_des_state[RIGHT_FOOT].x[_Y_];
       z = cart_des_state[RIGHT_FOOT].x[_Z_];
@@ -300,40 +309,48 @@ static int run_balance_task(void)
       target[R_HAA].th = 0.137696;
       target[R_FB].th = -0.014283;
       target[R_SAA].th = 0;
-      target[L_EB].th = joint_default_state[L_EB].th;
-      target[L_SFE].th = joint_default_state[L_SFE].th;
-      target[L_SAA].th = joint_default_state[L_SAA].th;
       target[L_AAA].th = 0.15;
-      // target[L_HAA].th -= 0.13;
+      target[L_HAA].th = -0.4;
       target[L_AFE].th = -0.3;
       min_jerk_joints();
       break;
 
-    // case COG_LEFT:
+    case COG_LEFT:
 
-    //   x = cart_des_state[LEFT_FOOT].x[_X_] * 0.6;
-    //   y = cart_des_state[LEFT_FOOT].x[_Y_] * 1.2;
-    //   z = cart_des_state[LEFT_FOOT].x[_Z_];
-    //   move_cog(x, y, z);
-    //   break;
+      target[L_HAA].th = 0.12;
+      target[L_AAA].th = -0.25;
+      target[R_HAA].th = -0.12;
+      target[L_HFE].th = 0.5;
+      target[R_AAA].th = -0.3;
+      target[R_AFE].th = -0.08;
+      target[R_HFE].th = 0.3;
+      min_jerk_joints();
+      break;
 
-    case RIGHT_LEG_SCOOT_FORWARD:
+    case RIGHT_LEG_UP:
 
-      target[R_HFE].th = 0.23;
-      target[R_HAA].th = -0.2;
-      target[R_AAA].th = -0.2;
-      target[R_AFE].th = joint_default_state[R_AFE].th;
-      target[L_HFE].th = 0.0;
-      target[L_AFE].th = -0.1;
-      target[L_HAA].th = 0.1;
-      target[L_AAA].th = 0.0;
+      target[R_AAA].th = -0.44;
+      target[R_AFE].th = 0.2;
+      target[L_AFE].th = -0.2;
+      target[R_HAA].th = -0.4;
+      min_jerk_joints();
+      break;
+
+    case RIGHT_LEG_DOWN:
+
+      target[R_AFE].th = -0.0;
+      target[R_HFE].th = 0.7;
       min_jerk_joints();
       break;
 
     case FIX_POSTURE:
 
       for (i=1; i<=N_DOFS; i++) {
-        target[i] = joint_default_state[i];
+        if (i == L_SAA || i == R_SAA) {
+          target[i].th = -1.3;
+        } else {
+          target[i] = joint_default_state[i];
+        }
       }
       min_jerk_joints();
       break;
